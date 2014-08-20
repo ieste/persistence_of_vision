@@ -6,6 +6,11 @@
 
 #include <util/delay.h>
 
+#define F_CPU 16000000UL     // 16 MHz
+
+// 4.32 nanoseconds
+// 2.16 seconds
+
 void setup() {
   // Set the Latch, Clock and Data lines as outputs.
   SHIFT_DIR |= (1 << LATCH) | (1 << CLOCK) | (1 << DATA);

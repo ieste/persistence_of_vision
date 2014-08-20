@@ -13,32 +13,34 @@
 #define F_CPU 16000000UL     // 16 MHz
 
 #include <avr/io.h>
-#include <util/delay.h>
+#include <util/delay.h> // These delay functions do not appear to give
+                        // reliable delays. Internal clock used instead.
+#include <avr/interrupt.h>
 
 #define LATCH 2     // Green
 #define CLOCK 4     // Yellow
 #define DATA 5      // Blue
 #define SHIFT_REG PORTC
 #define SHIFT_DIR DDRC
+#define LED 1
 
+void set_up_clock(void);
 
+volatile uint8_t flag;
 
 int
 main(void)
 {
     // Set the Latch, Clock and Data lines as outputs.
-    SHIFT_DIR |= (1 << LATCH) | (1 << CLOCK) | (1 << DATA);
+    SHIFT_DIR |= (1 << LATCH) | (1 << CLOCK) | (1 << DATA) | (1 << LED);
     // Set the Latch, Clock and Data lines low.
-    SHIFT_REG &= ~((1 << LATCH) | (1 << CLOCK) | (1 << DATA));
+    SHIFT_REG &= ~((1 << LATCH) | (1 << CLOCK) | (1 << DATA) | (1 << LED));
     
-    while (1) { // Loop indefinitely
-        toggle_latch();
-        shift_data_in(0b10101010);
-        _delay_ms(2000);
-        toggle_latch();
-        shift_data_in(0b01010101);
-        _delay_ms(2000);
-    }
+    set_up_clock();
+    flag = 0;
+    
+    
+    while (1) {} // Loop indefinitely
 }
 
 
@@ -54,13 +56,12 @@ toggle_latch (void)
 }
 
 void
-shift_data_in (char data)
+shift_data_in (uint8_t data)
 {
-    char i = 0;
     
-    for (i = 7; i >= 0; i--)
+    for (uint8_t i = 0; i < 8; i++)
     {
-        if ((data >> i) & 1)
+        if (((data >> (7 - i)) & 1))
             SHIFT_REG |= (1 << DATA);
         else
             SHIFT_REG &= (~(1 << DATA));
@@ -70,6 +71,36 @@ shift_data_in (char data)
         SHIFT_REG ^= (1 << CLOCK);
     }
     
-    SHIFT_REG &= (~(1 << LATCH));
+    toggle_latch();
+}
+
+void
+set_up_clock (void)
+{
+    cli();  // disable interrupts while setting up
+    TCCR1B |= (1 << CS12) | (1 << CS10);    // Divide clock by 1024
+    OCR1A = 15624;  // 1 second
+    TCCR1B |= (1 << WGM12); // Put timer into CTC mode
+    TIMSK1 |= (1 << OCIE1A); // Enable the timer compare interrupt
+    sei();  // enable interrupts
+}
+
+//interrupt service routine for timer
+ISR(TIMER1_COMPA_vect)
+{
+    SHIFT_REG ^= (1 << LED);
+    
+    if (flag) {
+        flag = 0;
+        toggle_latch();
+        shift_data_in(170);
+        
+    } else {
+        flag = 1;
+        toggle_latch();
+        shift_data_in(85);
+    }
+    
+    
 }
 

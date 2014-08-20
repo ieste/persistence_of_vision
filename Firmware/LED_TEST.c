@@ -22,10 +22,9 @@ int main(void)
     // disable global interrupts
     cli();
 
-    // divide by 64 - Set up the prescaler
+    // divide by 1024 - Set up the prescaler
     // TCCR1B -> Timer/Counter1 Control Register B
-    // To divide by 64 we want to set CS10 and CS11 to 1 on the TCCR1B reg
-    // Use the OR operator and left shift a 1 to the location of CS10/11
+    // To divide by 1024 we want to set CS10 and CS12 to 1 on the TCCR1B reg
     TCCR1B |= 1<<CS12 | 1<<CS10;
 
     // Set target value for clear timer on compare match trigger.

@@ -18,7 +18,8 @@ int main(void)
 {
 
     cli();                                  // disable global interrupts
-    EICRA |= (1 << ISC01) | (1 << ISC00);   // Interrupts occur on rising edge
+    //EICRA |= (1 << ISC01) | (1 << ISC00);   // Interrupts occur on rising edge
+    EICRA = ((EICRA & ~(1 << ISC00)) | (1 << ISC01)); // Interrupts occur on falling edge
     EIMSK |= (1 << INT0);                   // Enable the interrupt
     sei();                                  // enable global interrupts
     

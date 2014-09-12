@@ -1,7 +1,9 @@
-
+#/opt/local/bin/python2.7
+#
 
 import usb.core
 import usb.util
+import usb.control
 
 # find our device
 dev = usb.core.find(idVendor = 0x16c0)
@@ -10,11 +12,37 @@ dev = usb.core.find(idVendor = 0x16c0)
 if dev is None:
     raise ValueError('PoV Device not found')
 
-print dev
+#print dev
+
+# SET REPORT
+#dev.ctrl_transfer(bmRequestType=0b00100001, bRequest=0x09, wValue=0x0300, data_or_wLength=129)
+
+# GET REPORT
+print dev.ctrl_transfer(bmRequestType=0b10100001, bRequest=0x01, wValue=0x0300, wIndex=0)
+
+#print dev
 
 
 
 
+
+
+
+
+
+class USBInterface:
+    VENDOR_ID = 0x16C0
+
+    def __init__(self):
+        device = usb.core.find(idVendor = self.VENDOR_ID)
+        if device is None:
+            raise Exception('Device not found')
+
+
+
+"""
+
+dev1 =
 
 # set the active configuration. With no arguments, the first
 # configuration will be the active one
@@ -22,7 +50,7 @@ dev.set_configuration()
 
 # get an endpoint instance
 cfg = dev.get_active_configuration()
-intf = cfg[(0,0)]
+intf = cfg[(0, 0)]
 
 ep = usb.util.find_descriptor(
     intf,
@@ -36,6 +64,7 @@ assert ep is not None
 
 # write the data
 ep.write('test')
+"""
 
 """
 import usb

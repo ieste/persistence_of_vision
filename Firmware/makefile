@@ -17,7 +17,7 @@ MCU = atmega328p
 # m328p?
 
 # Target file name (without extension).
-TARGET = MOSFET_TEST
+TARGET = INTERRUPT_TEST
 
 # Programming hardware: type avrdude -c ? to get a full listing.
 

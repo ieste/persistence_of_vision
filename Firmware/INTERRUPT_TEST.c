@@ -13,26 +13,30 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+#define LED 0
+#define HALL 3
+
 
 int main(void)
 {
 
     cli();                                  // disable global interrupts
-    //EICRA |= (1 << ISC01) | (1 << ISC00);   // Interrupts occur on rising edge
-    EICRA = ((EICRA & ~(1 << ISC00)) | (1 << ISC01)); // Interrupts occur on falling edge
-    EIMSK |= (1 << INT0);                   // Enable the interrupt
+
+    EICRA = ((EICRA & ~(1 << ISC10)) | (1 << ISC11)); // Falling edge
+    
+    EIMSK |= (1 << INT1);                   // Enable the interrupt
     sei();                                  // enable global interrupts
     
-    DDRD |= (1 << 0);                   // Set PD0 to output
-    DDRD &= 0b11111011;                 // Set INT0 to input - INT0 is on PD2
-    PORTD |= (1 << 0);                  // Set PortD Pin0 high
+    DDRD |= (1 << LED);                     // Set PD0 (LED) to output
+    DDRD &= ~HALL;                          // Set PD3 (INT1) to input
+    PORTD |= (1 << LED);                    // Set LED high
     
-    while (1) {}                        // Loop indefinitely
+    while (1) {}                            // Loop indefinitely
 }
 
 
-// Toggle the LED during each interrupt (on external interrupt request 0)
-ISR(INT0_vect)
+// Toggle the LED during each interrupt
+ISR(INT1_vect)
 {
     PORTD ^= (1<<0);                // Use xor to toggle the LED
 }

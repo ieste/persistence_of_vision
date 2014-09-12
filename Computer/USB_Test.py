@@ -14,11 +14,15 @@ if dev is None:
 
 #print dev
 
+#data = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+#print data[11]
+
 # SET REPORT
 #dev.ctrl_transfer(bmRequestType=0b00100001, bRequest=0x09, wValue=0x0300, data_or_wLength=129)
 
 # GET REPORT
-print dev.ctrl_transfer(bmRequestType=0b10100001, bRequest=0x01, wValue=0x0300, wIndex=0)
+array = dev.ctrl_transfer(bmRequestType=0b10100001, bRequest=0x01, wValue=0x0300, wIndex=0, data_or_wLength=129)
+print array[5]
 
 #print dev
 

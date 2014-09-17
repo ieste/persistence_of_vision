@@ -31,17 +31,17 @@ size=(image_size[0], image_size[1])
 for line in fp.readlines():
     line=line.strip()
     imagestr.append(line)
-imagestr=''.join((image))
+imagestr=''.join((imagestr))
 
-print imagestr[:(size[0])]
-image.append(imagestr[:size[0]])
+#print imagestr[:(size[0]):]
+#image.append(imagestr[:size[0]])
 
-print image
+print imagestr
 
 
 #append matrix with image data
-for line in fp.readlines():
-    image.append(line)
+#for line in fp.readlines():
+#    image.append(line)
     #sys.stdout.write(line)
 
 

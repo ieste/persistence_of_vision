@@ -4,11 +4,16 @@ from PIL import Image, ImageTk, ImageDraw, ImageFont
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-#test images
-#fp = open("C:\\Users\\Megan\\Documents\\ENGG2800\\engg2800-team33\\Computer\\p1-pbm-ascii\\TestPattern 32x32 p1.pbm", "rU")
-fp = open("C:\\Users\\Megan\\Documents\\ENGG2800\\engg2800-team33\\Computer\\p1-pbm-ascii\\UQ logo-reverse-111x32 p1.pbm", "rU")
-#fp = open("C:\\Users\\Megan\\Documents\\ENGG2800\\engg2800-team33\\Computer\\p1-pbm-ascii\\It works 145x32 p1.pbm", "rU")
+#Greyscale
+#c = (max_val/255)
 
+#this image works
+#fp = open("C:\\Users\\Megan\\Documents\\ENGG2800\\engg2800-team33\\Computer\\p2-pgm-ascii\\It works 145x32 p2.pgm", "rU")
+
+#this image also works
+#fp = open("C:\\Users\\Megan\\Documents\\ENGG2800\\engg2800-team33\\Computer\\p2-pgm-ascii\\TestPattern 32x32 p2.pgm", "rU")
+
+fp = open("C:\\Users\\Megan\\Documents\\ENGG2800\\engg2800-team33\\Computer\\p2-pgm-ascii\\UQ logo-reverse-111x32 p2.pgm", "rU")
 #check file opened
 print fp
 
@@ -19,9 +24,14 @@ imagestr = []
 #read in first two lines of image(type and size)
 img_type = fp.readline()
 img_size = fp.readline()
+max_val = int(fp.readline())
+
+print img_type
+print img_size
+print max_val
+
 
 #get image size
-print img_type
 image_size=[]
 for s in img_size.split():
     image_size.append(int(s))
@@ -29,19 +39,19 @@ size=(image_size[0], image_size[1])
 (w,h)=size
 print size
 
-#append imagestring with image data
+#append matrix with image data
 for line in fp.readlines():
-    line=line.strip()
+    line=line.replace('\n', ' ')
     imagestr.append(line)
 imagestr=''.join((imagestr))
+imagestr=imagestr.split()
 
-#create matrix as list of lists (create image from imagestring)
+#create matrix as list of lists
 i=0
 while i<h:
     b = imagestr[(w*i):((w*i)+w)]
     image.append(b)
     i+=1
-image=list(image)
 
 #close file   
 fp.close()
@@ -56,8 +66,8 @@ for row in image:
     x=0
     for col in row:
         a=image[y][x]
-        if a == '1':
-            draw.point((x,y), fill="black")
+        colour = ((255/max_val)+((255/max_val)*int(a)))
+        draw.point((x,y), fill=(colour, colour, colour))
         x+=1
     y+=1
 im.show()

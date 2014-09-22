@@ -1,7 +1,7 @@
 import os.path
 import string
 import sys
-from PIL import Image, ImageDraw
+from PIL import Image
 
 
 def get_info(path_or_file):
@@ -97,42 +97,6 @@ def get_info(path_or_file):
     return file_type, (int(width), int(height)), int(max_val)
 
 
-def P4_parser(image_file):
-
-    # Get the image dimensions
-    (width, height) = get_info(image_file)[1]
-    dimensions = (width, height)
-
-    # Create an image to hold the image data
-    image = Image.new('L', dimensions, 0)
-
-    # Need to pad width out to 8 bits (rows are stored in full bytes).
-    row_length = width/8
-    if width % 8 is not 0:
-        row_length = (width + 8 - width % 8)/8
-
-    # Read in all the image data.
-    contents = image_file.read(row_length*height)
-
-    # Loop through each bit read in and convert it to a byte.
-    data = ""
-    for i in range(height):
-        for j in range(width):
-            position = i * row_length + j/8
-            if ord(contents[position]) & (1 << 7 - j % 8):
-                data += chr(0)
-                #sys.stdout.write('X')
-            else:
-                data += chr(255)
-                #sys.stdout.write('.')
-        #sys.stdout.write('\n')
-
-    # Populate the image with the data
-    image.putdata(data)
-
-    return image
-
-
 def P1_parser(image_file):
 
     # Read in image dimensions
@@ -194,18 +158,89 @@ def P2_parser(image_file):
     return image1
 
 
+#def P3_parser(image_file):
+
+
+def P4_parser(image_file):
+
+    # Get the image dimensions
+    (width, height) = get_info(image_file)[1]
+    dimensions = (width, height)
+
+    # Create an image to hold the image data
+    image = Image.new('L', dimensions, 0)
+
+    # Need to pad width out to 8 bits (rows are stored in full bytes).
+    row_length = width/8
+    if width % 8 is not 0:
+        row_length = (width + 8 - width % 8)/8
+
+    # Read in all the image data.
+    contents = image_file.read(row_length*height)
+
+    # Loop through each bit read in and convert it to a byte.
+    data = ""
+    for i in range(height):
+        for j in range(width):
+            position = i * row_length + j/8
+            if ord(contents[position]) & (1 << 7 - j % 8):
+                data += chr(0)
+                #sys.stdout.write('X')
+            else:
+                data += chr(255)
+                #sys.stdout.write('.')
+        #sys.stdout.write('\n')
+
+    # Populate the image with the data
+    image.putdata(data)
+
+    return image
+
+
+def P5_parser(image_file):
+
+    # Get the image dimensions
+    t, (width, height), max_val = get_info(image_file)
+    dimensions = (width, height)
+
+    # Create an image to hold the image data
+    image = Image.new('L', dimensions, 0)
+
+    # Loop through the pixel data and set the pixels in the image
+    for y in range(height):
+        for x in range(width):
+
+            pixel = ord(image_file.read(1))
+            if max_val > 255:
+                pixel += 256 * ord(image_file.read(1))
+
+            if pixel > max_val:
+                pixel = max_val
+            pixel = (pixel * 255)/max_val
+
+            image.putpixel((x, y), pixel)
+
+    return image
+
+
+#def P6_parser(image_file):
+
+
 def parse_image(image_file):
 
+    # Read in the file info
     image_info = get_info(image_file)
 
+    # If there was an error retrieving the image info then return
     if image_info is None:
         sys.stderr.write("Image header info not retrieved.\n")
         return
 
+    # Set file type and then selected parser based on file type
     file_type = image_info[0]
-
     parser = globals().get(file_type + "_parser")
 
+    # If parser not available the return
     if not parser:
         sys.stderr.write("Parser for " + file_type + " not found.\n")
         return

@@ -17,21 +17,21 @@ def get_info(path_or_file):
         if os.path.isfile(path_or_file):
             image_file = open(path_or_file, 'rb')
         else:
-            sys.stderr.write("Invalid file path.")
+            sys.stderr.write("Invalid file path.\n")
             return
 
     # Read in the file type, if it is not valid then return
     file_type = image_file.read(2)
     if file_type not in ['P1', 'P2', 'P3', 'P4', 'P5', 'P6']:
-        sys.stderr.write("Invalid file type.")
+        sys.stderr.write("Invalid file type.\n")
         return
 
     # Return if there is no whitespace separating the dimensions from the type
     if image_file.read(1) not in string.whitespace:
-        sys.stderr.write("Whitespace missing between type and dimensions.")
+        sys.stderr.write("Whitespace missing between type and dimensions.\n")
         return
 
-    width, height, max_val = 0, 0, 0
+    width, height, max_val = "", "", ""
     finished = 0
 
     # Read in dimensions and max value, discarding comments
@@ -46,21 +46,22 @@ def get_info(path_or_file):
             continue
 
         if byte in string.digits:
-            if width is 0:
+            if width is "":
                 width = byte
                 byte = image_file.read(1)
                 while byte not in string.whitespace:
                     width += byte
                     byte = image_file.read(1)
-            elif height is 0:
+            elif height is "":
                 height = byte
                 byte = image_file.read(1)
                 while byte not in string.whitespace:
                     height += byte
                     byte = image_file.read(1)
                 if file_type in ['P1', 'P4']:
+                    max_val = "255"
                     finished = 1
-            elif max_val is 0:
+            elif max_val is "":
                 height = byte
                 byte = image_file.read(1)
                 while byte not in string.whitespace:
@@ -69,12 +70,12 @@ def get_info(path_or_file):
                 finished = 1
 
         else:
-            sys.stderr.write("Invalid char found: " + byte)
+            sys.stderr.write("Invalid char found: " + byte + "\n")
             return
 
     # If width or height read in are not valid then return None
     if not width.isdigit() or not height.isdigit() or not max_val.isdigit():
-        sys.stderr.write("Invalid width, height or max_val.")
+        sys.stderr.write("Invalid width, height or max_val.\n")
         return
 
     # Discard any comments remaining before the image data
@@ -84,6 +85,7 @@ def get_info(path_or_file):
 
     # Check the last byte before the image data is whitespace
     if byte not in string.whitespace:
+        sys.stderr.write("Invalid whitespace in file.\n")
         return
 
     return file_type, (int(width), int(height)), max_val
@@ -160,6 +162,7 @@ def P2_parser(image_file):
     image = Image.new("RGB", dimensions, "white")
 
     return image
+
 
 def parse_image(image_file):
 

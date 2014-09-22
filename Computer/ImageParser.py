@@ -26,8 +26,14 @@ def get_info(path_or_file):
         sys.stderr.write("Invalid file type.\n")
         return
 
+    # Discard comments
+    byte = image_file.read(1)
+    while byte is '#':
+        image_file.readline()
+        byte = image_file.read(1)
+
     # Return if there is no whitespace separating the dimensions from the type
-    if image_file.read(1) not in string.whitespace:
+    if byte not in string.whitespace:
         sys.stderr.write("Whitespace missing between type and dimensions.\n")
         return
 
@@ -38,7 +44,7 @@ def get_info(path_or_file):
     while not finished:
         byte = image_file.read(1)
 
-        if byte is '#':
+        if byte == '#':
             image_file.readline()
             continue
 
@@ -62,10 +68,10 @@ def get_info(path_or_file):
                     max_val = "255"
                     finished = 1
             elif max_val is "":
-                height = byte
+                max_val = byte
                 byte = image_file.read(1)
                 while byte not in string.whitespace:
-                    height += byte
+                    max_val += byte
                     byte = image_file.read(1)
                 finished = 1
 
@@ -88,7 +94,7 @@ def get_info(path_or_file):
         sys.stderr.write("Invalid whitespace in file.\n")
         return
 
-    return file_type, (int(width), int(height)), max_val
+    return file_type, (int(width), int(height)), int(max_val)
 
 
 def P4_parser(image_file):
@@ -159,19 +165,49 @@ def P2_parser(image_file):
     t, (width, height), max_val = get_info(image_file)
     dimensions = (width, height)
 
-    image = Image.new("RGB", dimensions, "white")
+    image1 = Image.new("L", dimensions, "white")
 
-    return image
+    image = []
+    imagestr = []
+
+    for line in image_file.readlines():
+        line = line.replace('\n', ' ')
+        imagestr.append(line)
+    imagestr = ''.join(imagestr)
+    imagestr = imagestr.split()
+
+    #create matrix as list of lists
+    i = 0
+    while i < height:
+        b = imagestr[(width*i):((width*i)+width)]
+        image.append(b)
+        i += 1
+
+    print image
+
+    for y in range(height):
+        for x in range(width):
+            a = image[y][x]
+            colour = ((255/max_val)+((255/max_val)*int(a)))
+            image1.putpixel((x, y), colour)
+
+    return image1
 
 
 def parse_image(image_file):
 
-    file_type = get_info(image_file)[0]
+    image_info = get_info(image_file)
+
+    if image_info is None:
+        sys.stderr.write("Image header info not retrieved.\n")
+        return
+
+    file_type = image_info[0]
 
     parser = globals().get(file_type + "_parser")
 
     if not parser:
-        sys.stderr.write("Parser for " + file_type + " not found.")
+        sys.stderr.write("Parser for " + file_type + " not found.\n")
         return
 
     return parser(image_file)

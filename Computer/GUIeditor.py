@@ -1,6 +1,6 @@
 from Tkinter import *
 import tkFileDialog
-from PIL import Image, ImageTk, ImageDraw, ImageFont
+from PIL import Image, ImageTk, ImageDraw, ImageFont, ImageColor
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 import ImageParser
@@ -117,6 +117,7 @@ class POVApp(object):
         self.square.bind("<Button-1>", self.square_click)
         self.line.bind("<Button-1>", self.line_click)
 
+        #Select colours
     def c1_click(self, e):
         self.colour = '#ffffff'
         self.c_select.configure(bg='#ffffff')
@@ -142,33 +143,62 @@ class POVApp(object):
         self.c_select.configure(bg='#000000')
 
     def line_click(self, e):
+        self.canvas.bind("<Button-1>", self.line_start)
+        self.canvas.bind("<ButtonRelease-1>", self.line_end)
+        self.canvas.bind("<B1-Motion>", self.mouse_motion)
+
+    def line_start(self, e):
+        self.x, self.y = e.x, e.y
+        
+    def line_end(self, e):
+        x0,y0 = (self.x, self.y)
+        x1,y1 = (e.x, e.y)
         self.d = ImageDraw.Draw(self.img)
-        self.d.line((0, 10, 360, 10), fill = self.colour, width=2)
+        self.d.line([x0-19, y0-84, x1-19, y1-84], fill=self.colour, width=2)
         self.t = ImageTk.PhotoImage(self.img)
         self.canvas.create_image(200, 100, image=self.t)
-    
+
     def fill_click(self, e):
+        self.canvas.bind("<Button-1>", self.draw_fill)
+
+    def draw_fill(self, e):
         return 0
     
     def erase_click(self, e):
-        return 0
+        self.canvas.bind("<B1-Motion>", self.draw_erase)
+        self.canvas.bind("<ButtonRelease-1>", self.mouse_motion)
+
+    def draw_erase(self, e):
+        x0,y0 = (e.x, e.y)
+        self.d = ImageDraw.Draw(self.img)
+        self.d.ellipse([x0-25 ,y0-88, x0-15, y0-78], fill = 'white', outline='white')
+        self.t = ImageTk.PhotoImage(self.img)
+        self.canvas.create_image(200, 100, image=self.t)
     
     def square_click(self, e):
         return 0
     
     def pixel_click(self, e):
-        return 0
+        self.canvas.bind("<B1-Motion>", self.draw_pixel)
+        self.canvas.bind("<ButtonRelease-1>", self.mouse_motion)
+
+    def draw_pixel(self, e):
+        x0,y0 = (e.x, e.y)
+        self.d = ImageDraw.Draw(self.img)
+        self.d.point((x0-19,y0-84), fill = self.colour)
+        self.d.point((x0-20,y0-84), fill = self.colour)
+        self.d.point((x0-19,y0-85), fill = self.colour)
+        self.d.point((x0-20,y0-85), fill = self.colour)
+        self.t = ImageTk.PhotoImage(self.img)
+        self.canvas.create_image(200, 100, image=self.t)
 
     def mouse_motion(self, e):
         print (e.x, e.y)
 
     def mouse_click(self, e):
-        #self.img.putpixel((e.x, e.y), 0)
-        #print (e.x, e.y)
         return 0
 
     def mouse_release(self, e):
-        #print (e.x, e.y)
         return 0
                 
     def preview_text(self):

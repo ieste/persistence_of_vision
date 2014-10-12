@@ -42,9 +42,7 @@ class POVApp(object):
         self.instruct1.pack(side=LEFT)
         self.text_entry = Entry(self.text, width=28)
         self.text_entry.pack(side=LEFT)
-        self.preview_text = Button(self.text, text='Enter',
-                                  command=self.preview_text)
-        self.preview_text.pack(fill=X, side=LEFT, ipadx=10, padx=17)
+        self.text_entry.bind("<Return>", self.preview_text)
 
         #Select Size Frame
         self.select_size = Frame(root)
@@ -227,7 +225,7 @@ class POVApp(object):
         self.t = ImageTk.PhotoImage(self.img)
         self.canvas.create_image(200, 100, image=self.t)
                         
-    def preview_text(self):
+    def preview_text(self, e):
         self.text = self.text_entry.get()
         self.d = ImageDraw.Draw(self.img)
         self.text_width, self.text_height = self.d.textsize(self.text)
@@ -282,8 +280,8 @@ class POVApp(object):
     def new(self):
         self.w, self.h = 360, 32
         self.img = Image.new('RGB', (self.w, self.h), "white")
-        self.pi = ImageTk.PhotoImage(self.img)
-        self.canvas.create_image(200, 100, image=self.pi)
+        self.t = ImageTk.PhotoImage(self.img)
+        self.canvas.create_image(200, 100, image=self.t)
 
 root = Tk()
 app = POVApp(root)

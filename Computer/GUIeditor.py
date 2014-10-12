@@ -87,8 +87,8 @@ class POVApp(object):
         self.tools.grid(row=0, column=1, padx=5)
         
         #Tool Buttons
-        self.pixel = Button(self.tools, text = "Pixel")
-        self.pixel.pack(pady=2, fill=X)
+        self.draw = Button(self.tools, text = "Draw")
+        self.draw.pack(pady=2, fill=X)
         self.line = Button(self.tools, text = "Line")
         self.line.pack(pady=2, fill=X)
         self.fill = Button(self.tools, text = "Fill")
@@ -112,7 +112,7 @@ class POVApp(object):
         self.c6.bind("<Button-1>", self.c6_click)
 
         #Tools Mouse Bind
-        self.pixel.bind("<Button-1>", self.pixel_click)
+        self.draw.bind("<Button-1>", self.draw_click)
         self.fill.bind("<Button-1>", self.fill_click)
         self.erase.bind("<Button-1>", self.erase_click)
         self.square.bind("<Button-1>", self.square_click)
@@ -179,20 +179,28 @@ class POVApp(object):
     def square_click(self, e):
         return 0
     
-    def pixel_click(self, e):
-        self.canvas.bind("<B1-Motion>", self.draw_pixel)
+    def draw_click(self, e):
+        self.canvas.bind("<Button-1>", self.start_draw)
+        self.canvas.bind("<B1-Motion>", self.draw_draw)
         self.canvas.bind("<ButtonRelease-1>", self.mouse_motion)
 
-    def draw_pixel(self, e):
-        x0,y0 = (e.x-((360-self.w)/2)-19, e.y-84)
-        print self.w
+    def start_draw(self, e):
+        self.x0,self.y0 = (e.x-((360-self.w)/2)-19, e.y-84)
+
+    def draw_draw(self, e):
+        self.x1,self.y1 = (e.x-((360-self.w)/2)-19, e.y-84)
+        self.connect_draw(self.x0, self.y0, self.x1, self.y1)
+        self.x0, self.y0 = self.x1, self.y1
         self.d = ImageDraw.Draw(self.img)
-        self.d.point((x0,y0), fill = self.colour)
-        self.d.point((x0-1,y0), fill = self.colour)
-        self.d.point((x0,y0-1), fill = self.colour)
-        self.d.point((x0-1,y0-1), fill = self.colour)
         self.t = ImageTk.PhotoImage(self.img)
         self.canvas.create_image(200, 100, image=self.t)
+
+    def connect_draw(self, x0, y0, x1, y1):
+        self.d = ImageDraw.Draw(self.img)
+        self.d.line([x0, y0, x1, y1], fill=self.colour)
+        self.t = ImageTk.PhotoImage(self.img)
+        self.canvas.create_image(200, 100, image=self.t)
+        self.x0, self.y0 = x1, y1
 
     def mouse_motion(self, e):
         print (e.x, e.y)

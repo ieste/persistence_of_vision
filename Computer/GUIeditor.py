@@ -11,13 +11,14 @@ class POVApp(object):
     def __init__(self, root):
         #Main Window
         root.title('POV Wheel')
+        self.w, self.h = 360, 32
         
         #Menu Bar
         self.menu = Menu(root)
         self.file = Menu(self.menu, tearoff=0)
         self.file.add_command(label="New", command = self.new)
         self.file.add_command(label="Open Image", command = self.OpenImage)
-        self.file.add_command(label="Save Image")#add command
+        self.file.add_command(label="Save Image", command = self.save_image)
         self.file.add_command(label="Upload")#add command
         self.file.add_command(label="Exit", command = root.destroy)
         self.menu.add_cascade(label="File", menu = self.file)
@@ -52,10 +53,12 @@ class POVApp(object):
         self.width_label.pack(side=LEFT, padx=7)
         self.width_entry = Entry(self.select_size, width = 10)
         self.width_entry.pack(side=LEFT, padx=7)
+        self.width_entry.bind("<Return>", self.enter_width)
         self.height_label = Label(self.select_size, text = 'Enter height: ')
         self.height_label.pack(side=LEFT, padx=7)
         self.height_entry = Entry(self.select_size, width = 10)
         self.height_entry.pack(side=LEFT, padx=7)
+        self.height_entry.bind("<Return>", self.enter_height)
 
         #Set Colour
         self.colour = StringVar()
@@ -148,13 +151,13 @@ class POVApp(object):
         self.canvas.bind("<B1-Motion>", self.mouse_motion)
 
     def line_start(self, e):
-        self.x, self.y = e.x, e.y
+        self.x, self.y = (e.x-((360-self.w)/2)-19, e.y-84) 
         
     def line_end(self, e):
         x0,y0 = (self.x, self.y)
-        x1,y1 = (e.x, e.y)
+        x1,y1 = (e.x-((360-self.w)/2)-19, e.y-84)
         self.d = ImageDraw.Draw(self.img)
-        self.d.line([x0-19, y0-84, x1-19, y1-84], fill=self.colour, width=2)
+        self.d.line([x0, y0, x1, y1], fill=self.colour, width=2)
         self.t = ImageTk.PhotoImage(self.img)
         self.canvas.create_image(200, 100, image=self.t)
 
@@ -183,12 +186,13 @@ class POVApp(object):
         self.canvas.bind("<ButtonRelease-1>", self.mouse_motion)
 
     def draw_pixel(self, e):
-        x0,y0 = (e.x, e.y)
+        x0,y0 = (e.x-((360-self.w)/2)-19, e.y-84)
+        print self.w
         self.d = ImageDraw.Draw(self.img)
-        self.d.point((x0-19,y0-84), fill = self.colour)
-        self.d.point((x0-20,y0-84), fill = self.colour)
-        self.d.point((x0-19,y0-85), fill = self.colour)
-        self.d.point((x0-20,y0-85), fill = self.colour)
+        self.d.point((x0,y0), fill = self.colour)
+        self.d.point((x0-1,y0), fill = self.colour)
+        self.d.point((x0,y0-1), fill = self.colour)
+        self.d.point((x0-1,y0-1), fill = self.colour)
         self.t = ImageTk.PhotoImage(self.img)
         self.canvas.create_image(200, 100, image=self.t)
 
@@ -200,7 +204,29 @@ class POVApp(object):
 
     def mouse_release(self, e):
         return 0
-                
+
+    def enter_width(self, e):
+        self.w = self.width_entry.get()
+        if self.w == '':
+            return 0
+        self.w = int(self.width_entry.get())
+        if self.w > 360:
+            self.w = 360
+        self.img = Image.new('RGB', (self.w, self.h), "white")
+        self.t = ImageTk.PhotoImage(self.img)
+        self.canvas.create_image(200, 100, image=self.t)
+
+    def enter_height(self, e):
+        self.h = self.height_entry.get()
+        if self.h == '':
+            return 0
+        self.h = int(self.height_entry.get())
+        if self.h > 32:
+            self.h=32
+        self.img = Image.new('RGB', (self.w, self.h), "white")
+        self.t = ImageTk.PhotoImage(self.img)
+        self.canvas.create_image(200, 100, image=self.t)
+                        
     def preview_text(self):
         self.text = self.text_entry.get()
         self.d = ImageDraw.Draw(self.img)
@@ -219,9 +245,39 @@ class POVApp(object):
         self.size = self.info[1]
         self.w = self.size[0]
         self.h = self.size[1]
-        self.i = ImageTk.PhotoImage(self.img)
+        self.t = ImageTk.PhotoImage(self.img)
         self.canvas.delete(ALL)
-        self.canvas.create_image(200, 100, image=self.i)
+        self.canvas.create_image(200, 100, image=self.t)
+
+    def save_image(self):
+        self.data = []
+        self.pixel = self.img.getpixel((0,0))
+        
+        if type(self.pixel) == tuple:
+            for i in list(self.img.getdata()):
+                self.data.append(str(i[0]))
+        else:
+            for i in list(self.img.getdata()):
+                self.data.append(str(i))
+
+        self.data = '\n'.join(self.data)
+
+        from tkFileDialog import asksaveasfilename
+        self.filename=asksaveasfilename(defaultextension = '.pgm')
+        if self.filename:
+            f=open(self.filename, "w")
+            f.write('P2\n')
+            f.write('{} {}\n' .format(self.w, self.h))
+            f.write('255\n')
+            i = 0
+            j = 0
+            while i<self.h:
+                while j<(self.w*(i+1)):
+                    f.write('{} '.format(self.data.split()[j]))
+                    j+=1
+                i+=1
+                f.write('\n')
+            f.close()
 
     def new(self):
         self.w, self.h = 360, 32

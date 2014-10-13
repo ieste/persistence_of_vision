@@ -118,8 +118,8 @@ uchar   i;
      * additional hardware initialization.
      */
     
-    DDRB |= 1;
-    PORTB |= 1;
+    DDRD |= 1;
+    PORTD |= 1;
     
     odDebugInit();
     DBG1(0x00, 0, 0);       /* debug output: main starts */

@@ -22,7 +22,8 @@ int main(void)
 
     cli();                                  // disable global interrupts
 
-    EICRA = ((EICRA & ~(1 << ISC10)) | (1 << ISC11)); // Falling edge
+    // Interrupt 1 triggers on falling edge.
+    EICRA = ((EICRA & ~(1 << ISC10)) | (1 << ISC11));
     
     EIMSK |= (1 << INT1);                   // Enable the interrupt
     sei();                                  // enable global interrupts

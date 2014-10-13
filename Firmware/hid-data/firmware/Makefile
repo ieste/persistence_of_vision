@@ -17,6 +17,8 @@ OBJECTS = usbdrv/usbdrv.o usbdrv/usbdrvasm.o usbdrv/oddebug.o main.o
 
 COMPILE = avr-gcc -Wall -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
 
+BOOTSTART = 0x7000
+
 # symbolic targets:
 help:
 	@echo "This Makefile has no default rule. Use one of the following:"

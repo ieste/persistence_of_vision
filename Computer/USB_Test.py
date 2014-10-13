@@ -1,7 +1,9 @@
 #/opt/local/bin/python2.7
 
 import usb.core
+
 import array
+import time
 
 
 class USBDevice:
@@ -12,7 +14,7 @@ class USBDevice:
         #TODO allow user selection of device but also autoselect the best candidate
         self.device = usb.core.find(idVendor=vid)
         if self.device is None:
-            raise Exception('Device not found')
+            raise Exception('Device not found.')
 
     def write(self, data):
         self.device.ctrl_transfer(bmRequestType=0b00100001, bRequest=0x09, wValue=0x0300, data_or_wLength=data)
@@ -28,26 +30,13 @@ class USBDevice:
 
 avr = USBDevice()
 
-dataIn = array.array('B', [0]*128)
-dataIn[0*16+0] = 255
-dataIn[0*16+1] = 0
-dataIn[1*16+0] = 255
-dataIn[1*16+1] = 0
-dataIn[2*16+0] = 255
-dataIn[2*16+1] = 0
-dataIn[3*16+0] = 255
-dataIn[3*16+1] = 0
-dataIn[4*16+0] = 255
-dataIn[4*16+1] = 0
-dataIn[5*16+0] = 255
-dataIn[5*16+1] = 0
-dataIn[6*16+0] = 255
-dataIn[6*16+1] = 0
-dataIn[7*16+0] = 255
-dataIn[7*16+1] = 0
+for i in range(10):
+    data = array.array('B', [i]*128)
 
-#print data
-
-# SET REPORT
-avr.write(dataIn)
-print avr.read()
+    avr.write(data)
+    input = avr.read()
+    for j in range(128):
+        if input[j] is not data[j]:
+            print "error"
+            print input[j]
+    print i

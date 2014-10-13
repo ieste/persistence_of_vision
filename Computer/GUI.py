@@ -3,6 +3,7 @@ import tkFileDialog
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+import ImageParser
 
 class POVApp(object):
     """Top level POV Display application"""
@@ -86,8 +87,10 @@ class POVApp(object):
 
     def OpenImage(self):
         self.imagefile = tkFileDialog.askopenfilename()
-        self.f=open(self.imagefile, "r")
-        self.im=Image.open(self.f)
+        #self.f=open(self.imagefile, "r")
+        #self.im=Image.open(self.f)
+        im = open(self.imagefile, 'rb')
+        self.im=ImageParser.parse_image(im)
         #self.im.show()
 
     def upload_image(self):

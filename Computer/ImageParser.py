@@ -1,3 +1,12 @@
+"""
+A collection of methods to provide functionality for reading and writing
+NetPBM images.
+
+Functions:
+
+get_info() -- get header details from a NetPBM file.
+parse_image() -- read in data from any NetPBM file.
+"""
 import os.path
 import string
 import sys
@@ -97,7 +106,7 @@ def get_info(path_or_file):
     return file_type, (int(width), int(height)), int(max_val)
 
 
-def P1_parser(image_file):
+def _P1_parser(image_file):
 
     # Read in image dimensions
     (width, height) = get_info(image_file)[1]
@@ -124,7 +133,7 @@ def P1_parser(image_file):
     return image
 
 
-def P2_parser(image_file):
+def _P2_parser(image_file):
 
     t, (width, height), max_val = get_info(image_file)
     dimensions = (width, height)
@@ -161,7 +170,7 @@ def P2_parser(image_file):
 #def P3_parser(image_file):
 
 
-def P4_parser(image_file):
+def _P4_parser(image_file):
 
     # Get the image dimensions
     (width, height) = get_info(image_file)[1]
@@ -197,7 +206,7 @@ def P4_parser(image_file):
     return image
 
 
-def P5_parser(image_file):
+def _P5_parser(image_file):
 
     # Get the image dimensions
     t, (width, height), max_val = get_info(image_file)
@@ -238,7 +247,7 @@ def parse_image(image_file):
 
     # Set file type and then selected parser based on file type
     file_type = image_info[0]
-    parser = globals().get(file_type + "_parser")
+    parser = globals().get("_" + file_type + "_parser")
 
     # If parser not available the return
     if not parser:

@@ -3,10 +3,14 @@ import tkFileDialog
 from PIL import Image, ImageTk, ImageDraw, ImageFont, ImageColor
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-# Import custom modules/classes
 import ImageParser
-from USBDevice import USBDevice
+import math
+
+class InvalidFile(object):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 class POVApp(object):
     """Top level POV Display application"""
@@ -22,7 +26,7 @@ class POVApp(object):
         self.file.add_command(label="New", command = self.new)
         self.file.add_command(label="Open Image", command = self.OpenImage)
         self.file.add_command(label="Save Image", command = self.save_image)
-        self.file.add_command(label="Upload", command = self.upload_image)#add command
+        self.file.add_command(label="Upload")#add command
         self.file.add_command(label="Exit", command = root.destroy)
         self.menu.add_cascade(label="File", menu = self.file)
         root.config(menu=self.menu, padx=5)
@@ -120,8 +124,8 @@ class POVApp(object):
         self.square.bind("<Button-1>", self.square_click)
         self.line.bind("<Button-1>", self.line_click)
 
-        #The following functions select colours based on the colour label that
-        #is clicked
+    #The following functions select colours based on the colour label that
+    #is clicked
     def c1_click(self, e):
         self.colour = '#ffffff'
         self.c_select.configure(bg='#ffffff')
@@ -180,9 +184,9 @@ class POVApp(object):
         
     #Erase function - draws a white circle of 10 pixel diameter
     def draw_erase(self, e):
-        x0,y0 = (e.x, e.y)
+        x0,y0 = (e.x-((360-self.w)/2)-19, e.y-84)
         self.d = ImageDraw.Draw(self.img)
-        self.d.ellipse([x0-25 ,y0-88, x0-15, y0-78], fill = 'white', outline='white')
+        self.d.ellipse([x0 ,y0, x0+10, y0+10], fill = 'white', outline='white')
         self.t = ImageTk.PhotoImage(self.img)
         self.canvas.create_image(200, 100, image=self.t)
 
@@ -224,7 +228,7 @@ class POVApp(object):
 
     #Default state for mouse motion
     def mouse_motion(self, e):
-        return 0
+        print (e.x-((360-self.w)/2)-19, e.y-84)
 
     #Default state for mouse click
     def mouse_click(self, e):
@@ -262,21 +266,86 @@ class POVApp(object):
 
     #Opens new window with image displayed as would appear on the POV display
     def preview(self):
+
+        #Initialise image data, height and width variables
+        self.preview_data = []
+        h = 0
+        w = 0
+
+        #Open a new window with canvas
         self.rotate_preview = Toplevel()
         self.preview_canvas = Canvas(self.rotate_preview, bg="light grey", width=96, height=96)
+        self.preview_canvas.pack()
+
+        #Checks pixel type and puts image data into list
+        self.pixel = self.img.getpixel((0,0))        
+        if type(self.pixel) == tuple:
+            for i in list(self.img.getdata()):
+                self.preview_data.append(str(i[0]))
+        else:
+            for i in list(self.img.getdata()):
+                self.preview_data.append(str(i))
+                
+        #Setting up image to be drawn
+        #Draws blank image, outside radius 96, inner radius 32
+        self.preview_image = Image.new('RGB', (96, 96), "#d3d3d3")
+        self.pidraw = ImageDraw.Draw(self.preview_image)
+        self.pidraw.ellipse([0,0,96,96], fill="white")
+        self.pidraw.ellipse([32,32,64,64], fill="#d3d3d3")
+
+        #Reverse mapping maths
+        #For rect coords (x, y) in rotated image, find radius d from centre (x=48, y=48)
+        #Find angle theta starting from 'negative y' axis (ie from first half y axis)
+        #Let r = height in original image
+        #Let theta = width in original image
+        #Get colour from original image data list and draw point on rotated image
+
+        #Problems so far: cannot divide by y=0 in atan, so range has to start from 1
+        #colour is in wrong format (255 = 'red', needs to be white)
+        #values of theta are not varying enough
+        #only works for full sized images
+        #maths probably is not correct
+        #need to reevaluate atan for each quadrant and only draw if r < height
+        
+        for y in range(1,96):
+            for x in range(1,96):
+                r = 32-int(math.hypot(x-48, y-48)-16)
+                if x < 48 and y <48:
+                    theta = int(math.degrees(math.atan((48-x)/(48-y))))
+                elif x < 48 and y > 48:
+                    theta = int(math.degrees(math.atan((48-x)/y)))
+                elif x > 48 and y <48:
+                    theta = int(math.degrees(math.atan((x/(48-y)))))
+                elif x > 48 and y > 48:
+                    theta = int(math.degrees(math.atan(x/y)))
+                if r<32 and theta <360:
+                    
+                    #print statement to check values
+                    #print ("x:{} y:{} r:{} theta:{}" .format(x, y, r, theta))
+
+                    colour = StringVar()
+                    colour = int(self.preview_data[self.w*r + theta])
+                    self.pidraw.point((x, y), fill=colour)                   
+
+        self.piphoto = ImageTk.PhotoImage(self.preview_image)
+        self.preview_canvas.create_image(48,48, image=self.piphoto)
 
     #Opens image through Image Parser
     def OpenImage(self):
         self.imagefile = tkFileDialog.askopenfilename()
-        im = open(self.imagefile, 'rb')
-        self.img=ImageParser.parse_image(im)
-        self.info =  ImageParser.get_info(im)
-        self.size = self.info[1]
-        self.w = self.size[0]
-        self.h = self.size[1]
-        self.t = ImageTk.PhotoImage(self.img)
-        self.canvas.delete(ALL)
-        self.canvas.create_image(200, 100, image=self.t)
+        try:
+            im = open(self.imagefile, 'rb')
+            self.img=ImageParser.parse_image(im)
+            self.info =  ImageParser.get_info(im)
+            self.size = self.info[1]
+            self.w = self.size[0]
+            self.h = self.size[1]
+            self.t = ImageTk.PhotoImage(self.img)
+            self.canvas.delete(ALL)
+            self.canvas.create_image(200, 100, image=self.t)
+        except InvalidFile as e:
+            tkMessageBox.showwarning(title="Invalid File",
+                                     message=e)
 
     #Saves image as P2 type .pgm for any given name
     def save_image(self):
@@ -308,14 +377,6 @@ class POVApp(object):
                 i+=1
                 f.write('\n')
             f.close()
-
-    def upload_image(self):
-        try:
-            avr = USBDevice()
-        except:
-            print "USB Device not found."
-            return
-        avr.write_pages(ImageParser.image_to_data(self.img))
 
     #Returns image to blank, 360 pixel wide
     def new(self):

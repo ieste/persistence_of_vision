@@ -11,6 +11,7 @@ import os.path
 import string
 import sys
 from PIL import Image
+import array
 
 
 def get_info(path_or_file):
@@ -254,7 +255,71 @@ def parse_image(image_file):
         sys.stderr.write("Parser for " + file_type + " not found.\n")
         return
 
+    #return resize_image(parser(image_file))
     return parser(image_file)
+
+
+# Move to an image processing module
+def resize_image(image):
+
+    (width, height) = image.size
+    if (width, height) is (360, 32):
+        return
+
+    im = Image.new("L", (360, 32), "black")
+
+    #TODO Compress this function (it's kind of messy)
+
+    if width >= 360 and height >= 32:
+        x = (width - 360) / 2
+        y = (height - 32) / 2
+        image = image.crop((x, y, x+360, y+32))
+        im.paste(image)
+
+    if width < 360 and height < 32:
+        im.paste(image, (180 - width/2, 16 - height/2))
+
+    elif width < 360:
+        y = (height - 32) / 2
+        image = image.crop((0, y, width, y+32))
+        im.paste(image, (180 - width/2, 0))
+
+    elif height < 32:
+        x = (width - 360) / 2
+        image = image.crop((x, 0, x+360, height))
+        im.paste(image, (0, 16 - height/2))
+
+    return im
+
+
+# Move to an image processing module
+def image_to_data(image):
+
+    image = resize_image(image)
+    data = [array.array('B', [0]*128) for i in range(90)]
+    image_data = list(image.getdata())
+
+    width = 360
+
+    # loop through each column of pixels
+    for i in range(width):
+        col = image_data[i::width]
+        sub_col = [col[x % 2 * 16 + x / 2:(x % 2 + 1) * 16:2] for x in range(4)]
+
+        #loop through each bit of the col
+        for j in range(8):
+            #break col into 4 lots of 8 pixels
+            for k in range(4):
+                byte = 0
+                for l in range(8):
+                    if sub_col[k][l] & (1 << j):
+                        #TODO SHOULD THIS BE (1 << 7-l)??
+                        byte |= (1 << l)
+                data[i/4][i%4*32+j*4+k] = byte
+
+    return data
+
+
 
 
 

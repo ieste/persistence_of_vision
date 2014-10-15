@@ -56,6 +56,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
             // The host wants to send data
         
             bytesRemaining = 128;
+            toggleLED();
             
             return USB_NO_MSG;
         }

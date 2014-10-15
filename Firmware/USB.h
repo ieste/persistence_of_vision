@@ -6,6 +6,7 @@
 
 #include "usbdrv/usbdrv.h"
 #include "Flash.h"
+#include "Main.h"
 
 
 #endif

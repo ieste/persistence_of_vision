@@ -5,33 +5,15 @@
 *   For the ATMega328P
 */
 
-#define F_CPU 16000000UL     // 16 MHz
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <util/delay.h>
+#include "Main.h"
 
-#include "Shift.h"
-//#include "USB.h"
-#include "usbdrv/usbdrv.h"
-#include "HallEffect.h"
-
-#define LED_REG PORTD
-#define LED_DIR DDRD
-#define LED     0
-#define MODE    1
-#define toggleLED() PORTD ^= (1<<LED)
-
-void ledInit(void);
-void modeInit(void);
-
-volatile uint8_t on = 0;
 
 
 int
 main(void)
 {
-    // ISRs are located in NWWR memory
+    // ISRs are located in NRWW memory
     MCUCR |= (1 << IVCE);
     MCUCR = 0x02;
     
@@ -43,14 +25,10 @@ main(void)
     cli();
     usbInit();
 
+    
     _delay_ms(200);
-    /*
-    shiftDataIn(255);
-    shiftDataIn(255);
-    shiftToggleLatch();
-    shiftToggleFetsLatch();
-    */
     sei();
+
     
     while (1) {
         usbPoll();
@@ -58,32 +36,12 @@ main(void)
 }
 
 
-// Toggle the LED during each interrupt
-ISR(INT1_vect)
-{
-    toggleLED();
-    on ^= 1;
-    if (on) {
-        shiftDataIn(0);
-        shiftDataIn(0);
-        shiftToggleLatch();
-        shiftToggleFetsLatch();
-    } else {
-        shiftDataIn(255);
-        shiftDataIn(255);
-        shiftToggleLatch();
-        shiftToggleFetsLatch();
-    }
-}
-
-
-
 
 
 void
 ledInit(void)
 {
-    // Set the LED as an output and turn it off.
+    // Set the LED as an output and turn it on.
     LED_DIR |= (1 << LED);
     //LED_REG &= ~(1 << LED);
     LED_REG |= (1 << LED);
@@ -94,6 +52,14 @@ void
 modeInit(void)
 {
     LED_DIR &= ~(1 << MODE);
+    PCICR |= (1 << PCIE2);
+    PCMSK2 |= (1 << PCINT17);
+}
+
+ISR(PCINT17_vect) {
+    //toggleLED();
+    //_delay_ms(1000);
+    //LEDoff();
 }
 
 

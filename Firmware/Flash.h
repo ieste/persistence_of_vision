@@ -10,7 +10,7 @@
 #define PAGESIZE SPM_PAGESIZE
 
 void read_page(uint16_t pageAddress, uint8_t* buffer);
+void read_dword(uint16_t byteAddress);
 void write_page(uint16_t pageAddress, uint8_t* buffer);
-
 
 #endif

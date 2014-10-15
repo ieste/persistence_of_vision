@@ -3,7 +3,10 @@ import tkFileDialog
 from PIL import Image, ImageTk, ImageDraw, ImageFont, ImageColor
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+# Import custom modules/classes
 import ImageParser
+from USBDevice import USBDevice
 
 class POVApp(object):
     """Top level POV Display application"""
@@ -19,7 +22,7 @@ class POVApp(object):
         self.file.add_command(label="New", command = self.new)
         self.file.add_command(label="Open Image", command = self.OpenImage)
         self.file.add_command(label="Save Image", command = self.save_image)
-        self.file.add_command(label="Upload")#add command
+        self.file.add_command(label="Upload", command = self.upload_image)#add command
         self.file.add_command(label="Exit", command = root.destroy)
         self.menu.add_cascade(label="File", menu = self.file)
         root.config(menu=self.menu, padx=5)
@@ -305,6 +308,14 @@ class POVApp(object):
                 i+=1
                 f.write('\n')
             f.close()
+
+    def upload_image(self):
+        try:
+            avr = USBDevice()
+        except:
+            print "USB Device not found."
+            return
+        avr.write_pages(ImageParser.image_to_data(self.img))
 
     #Returns image to blank, 360 pixel wide
     def new(self):

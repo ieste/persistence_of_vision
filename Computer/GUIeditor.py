@@ -41,7 +41,7 @@ class POVApp(object):
         self.toolbar = Frame(root)
         self.toolbar.grid(row=0, column=0, padx=(6, 3), pady=6)
 
-        #Set Colour - intialize colour as white
+        #Set Colour - initialize colour as white
         self.colour = StringVar()
         self.colour = "#FFFFFF"
 
@@ -103,7 +103,8 @@ class POVApp(object):
 
         #Rotated view preview button - in select size frame
         self.preview_button = Button(self.select_size, text='Preview', command=self.preview)
-        self.preview_button.pack(side=LEFT, pad =30, ipadx=30)
+        self.preview_button.pack(side=LEFT, padx=30, ipadx=30)
+
 
     #Returns image to blank, 360 pixel wide
     def new(self):
@@ -181,8 +182,8 @@ class POVApp(object):
         self.x, self.y = self.translate_coords(e.x, e.y)
 
     def line_motion(self, e):
-        x0, y0 = (self.x, self.y)
-        x1, y1 = self.translate_coords(e.x, e.y)
+        x0,y0 = (self.x, self.y)
+        x1,y1 = self.translate_coords(e.x, e.y)
         temp_img = self.img.copy()
         self.d = ImageDraw.Draw(temp_img)
         self.d.line([x0, y0, x1, y1], fill=self.colour, width=2)
@@ -216,7 +217,7 @@ class POVApp(object):
 
     #Initialises draw coordinates, and draws single pixel at point
     def erase_start(self, e):
-        self.x0, self.y0 = self.translate_coords(e.x, e.y)
+        self.x0,self.y0 = self.translate_coords(e.x, e.y)
         self.d = ImageDraw.Draw(self.img)
         self.d.ellipse([self.x0-5, self.y0-5, self.x0+5, self.y0+5], fill='black', outline='black')
         self.t = ImageTk.PhotoImage(self.img)
@@ -246,7 +247,7 @@ class POVApp(object):
         self.d = ImageDraw.Draw(self.img)
         self.text_width, self.text_height = self.d.textsize(self.text)
         
-        self.d.text((self.w/2-(self.text_width/2), self.h/2.0-self.text_height/2),
+        self.d.text((((self.w/2-((self.text_width)/2)), (self.h/2.0-(self.text_height)/2))),
                     self.text, fill=self.colour)
         self.t = ImageTk.PhotoImage(self.img)
         self.canvas.itemconfig(self.tid, image=self.t)
@@ -287,7 +288,7 @@ class POVApp(object):
         self.preview_canvas.pack()
 
         #Checks pixel type and puts image data into list
-        self.pixel = self.img.getpixel((0,0))
+        self.pixel = self.img.getpixel((0, 0))
         if type(self.pixel) == tuple:
             for i in list(self.img.getdata()):
                 self.preview_data.append(str(i[0]))
@@ -423,7 +424,7 @@ class POVApp(object):
         try:
             im = open(self.imagefile, 'rb')
             self.img=ImageParser.parse_image(im)
-            self.info = ImageParser.get_info(im)
+            self.info =  ImageParser.get_info(im)
             self.size = self.info[1]
             self.w = self.size[0]
             self.h = self.size[1]
@@ -437,7 +438,7 @@ class POVApp(object):
     #Saves image as P2 type .pgm for any given name
     def save_image(self):
         self.data = []
-        self.pixel = self.img.getpixel((0, 0))
+        self.pixel = self.img.getpixel((0,0))
         
         if type(self.pixel) == tuple:
             for i in list(self.img.getdata()):
@@ -449,18 +450,18 @@ class POVApp(object):
         self.data = '\n'.join(self.data)
 
         from tkFileDialog import asksaveasfilename
-        self.filename = asksaveasfilename(defaultextension='.pgm')
+        self.filename=asksaveasfilename(defaultextension = '.pgm')
         if self.filename:
-            f = open(self.filename, "w")
+            f=open(self.filename, "w")
             f.write('P2\n')
             f.write('{} {}\n' .format(self.w, self.h))
             f.write('255\n')
             i = 0
             j = 0
-            while i < self.h:
-                while j < (self.w*(i+1)):
+            while i<self.h:
+                while j<(self.w*(i+1)):
                     f.write('{} '.format(self.data.split()[j]))
-                    j += 1
+                    j+=1
                 i += 1
                 f.write('\n')
             f.close()

@@ -12,7 +12,7 @@ void read_page(uint16_t pageAddress, uint8_t* buffer) {
     }
 }
 
-void read_dword(uint16_t byteAddress) {
+uint32_t read_dword(uint16_t byteAddress) {
     return pgm_read_dword(byteAddress);
 }
 

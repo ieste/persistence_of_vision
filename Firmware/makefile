@@ -40,6 +40,7 @@ SRC = $(TARGET).c \
       usbdrv/usbdrv.c \
       usbdrv/oddebug.c \
       Flash.c \
+      Display.c \
       USB.c 
 
 # List Assembler source files here. Make them always end in a capital .S.

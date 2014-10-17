@@ -13,9 +13,12 @@
 //#include "USB.h"
 #include "usbdrv/usbdrv.h"
 #include "HallEffect.h"
+#include "Display.h"
 
 #define LED_REG PORTD
 #define LED_DIR DDRD
+#define MODE_REG PORTD
+#define MODE_DIR PORTD
 #define LED     0
 #define MODE    1
 #define toggleLED() PORTD ^= (1<<LED)
@@ -24,7 +27,7 @@
 
 void ledInit(void);
 void modeInit(void);
-
+void initialise(void);
 
 
 

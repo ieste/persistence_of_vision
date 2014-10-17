@@ -8,35 +8,48 @@
 
 #include "Main.h"
 
-
+volatile uint8_t mode = 0;
 
 int
 main(void)
 {
+    
+    initialise();
+    
+    while (1) {
+        usbPoll();
+        
+        // Manage speed and enable/disable display accordingly.
+        if (getSpeed() > 58) {
+            enableDisplay();
+        } else {}
+        
+        
+    } // Loop indefinitely
+}
+
+
+void initialise(void) {
     // ISRs are located in NRWW memory
     MCUCR |= (1 << IVCE);
     MCUCR = 0x02;
     
     shiftInit();
     ledInit();
-    
     hallEffectInit();
     modeInit();
     cli();
     usbInit();
-
-    
-    _delay_ms(200);
+    //_delay_ms(200);
     sei();
-
     
-    while (1) {
-        usbPoll();
-    } // Loop indefinitely
+    // Set mode
+    if (MODE_REG & (1 << MODE)) {
+        mode = 1;
+        hallEffectDisable();
+        setSpeed(200);
+    }
 }
-
-
-
 
 void
 ledInit(void)
@@ -51,15 +64,25 @@ ledInit(void)
 void
 modeInit(void)
 {
-    LED_DIR &= ~(1 << MODE);
+    MODE_DIR &= ~(1 << MODE);
+    
     PCICR |= (1 << PCIE2);
     PCMSK2 |= (1 << PCINT17);
 }
 
-ISR(PCINT17_vect) {
+ISR(PCINT2_vect) {
     //toggleLED();
     //_delay_ms(1000);
     //LEDoff();
+    
+    // DEBOUNCE
+    // IF MODE = 1, MODE = 2
+    // IF MODE = 2, MODE = 3
+    // IF MODE = 0, MODE = 4
+    // IF MODE = 3, MODE = 0
+        // set speed 0
+        // hall effect enable
+    // IF MODE = 4, MODE = 0
 }
 
 

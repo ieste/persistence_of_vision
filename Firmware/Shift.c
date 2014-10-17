@@ -6,12 +6,12 @@
 void shiftInit(void) {
     
     // Set the Latch, Clock and Data, FETs and enable lines as outputs.
-    SHIFT_DIR |= (1 << LATCH) | (1 << CLOCK) | (1 << DATA) | (1 << FET1) |
-    (1 << FET2) | (1 << ENABLE);
+    SHIFT_DIR |= (1 << LATCH) | (1 << CLOCK) | (1 << DATA) | (1 << FET1)
+                 | (1 << FET2) | (1 << ENABLE);
     
     // Set the Latch, Clock, Data and enable lines low. Also MOSFET 2.
     SHIFT_REG &= ~((1 << LATCH) | (1 << CLOCK) | (1 << DATA) | (1 << FET2)
-                   | (1 << ENABLE));
+                 | (1 << ENABLE));
     
     // Set MOSFET 1 high.
     SHIFT_REG |= (1 << FET1);
@@ -19,8 +19,8 @@ void shiftInit(void) {
     // Set all outputs to 0 to begin with.
     shiftDataIn(0);
     shiftDataIn(0);
-    shiftToggleLatch();
-    shiftToggleFetsLatch();
+    shiftLatch();
+    shiftLatchFets();
 }
 
 
@@ -41,21 +41,4 @@ shiftDataIn(uint8_t data)
         SHIFT_REG ^= (1 << CLOCK);
         SHIFT_REG ^= (1 << CLOCK);
     }
-}
-
-
-void
-shiftToggleLatch (void)
-{
-    // Delay for 100 ns to ensure latching succeeds.
-    //_delay_us(0.1);
-    // Toggle the latch.
-    SHIFT_REG ^= (1 << LATCH);
-    
-    //when latch goes high switch mosfets
-}
-
-void shiftToggleFetsLatch(void)
-{
-    SHIFT_REG ^= (1 << FET1) | (1 << FET2) | (1 << LATCH);
 }

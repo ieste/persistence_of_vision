@@ -5,85 +5,56 @@
 *   For the ATMega328P
 */
 
-#define F_CPU 16000000UL     // 16 MHz
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <util/delay.h>
+#include "Main.h"
 
-#include "Shift.h"
-//#include "USB.h"
-#include "usbdrv/usbdrv.h"
-#include "HallEffect.h"
-
-#define LED_REG PORTD
-#define LED_DIR DDRD
-#define LED     0
-#define MODE    1
-#define toggleLED() PORTD ^= (1<<LED)
-
-void ledInit(void);
-void modeInit(void);
-
-volatile uint8_t on = 0;
-
+volatile uint8_t mode = 0;
 
 int
 main(void)
 {
-    // ISRs are located in NWWR memory
+    
+    initialise();
+    
+    while (1) {
+        usbPoll();
+        
+        // Manage speed and enable/disable display accordingly.
+        if (getSpeed() > 58) {
+            enableDisplay();
+        } else {}
+        
+        
+    } // Loop indefinitely
+}
+
+
+void initialise(void) {
+    // ISRs are located in NRWW memory
     MCUCR |= (1 << IVCE);
     MCUCR = 0x02;
     
     shiftInit();
     ledInit();
-    
     hallEffectInit();
     modeInit();
     cli();
     usbInit();
-
-    _delay_ms(200);
-    /*
-    shiftDataIn(255);
-    shiftDataIn(255);
-    shiftToggleLatch();
-    shiftToggleFetsLatch();
-    */
+    //_delay_ms(200);
     sei();
     
-    while (1) {
-        usbPoll();
-    } // Loop indefinitely
-}
-
-
-// Toggle the LED during each interrupt
-ISR(INT1_vect)
-{
-    toggleLED();
-    on ^= 1;
-    if (on) {
-        shiftDataIn(0);
-        shiftDataIn(0);
-        shiftToggleLatch();
-        shiftToggleFetsLatch();
-    } else {
-        shiftDataIn(255);
-        shiftDataIn(255);
-        shiftToggleLatch();
-        shiftToggleFetsLatch();
+    // Set mode
+    if (MODE_REG & (1 << MODE)) {
+        mode = 1;
+        hallEffectDisable();
+        setSpeed(200);
     }
 }
-
-
-
-
 
 void
 ledInit(void)
 {
-    // Set the LED as an output and turn it off.
+    // Set the LED as an output and turn it on.
     LED_DIR |= (1 << LED);
     //LED_REG &= ~(1 << LED);
     LED_REG |= (1 << LED);
@@ -93,7 +64,25 @@ ledInit(void)
 void
 modeInit(void)
 {
-    LED_DIR &= ~(1 << MODE);
+    MODE_DIR &= ~(1 << MODE);
+    
+    PCICR |= (1 << PCIE2);
+    PCMSK2 |= (1 << PCINT17);
+}
+
+ISR(PCINT2_vect) {
+    //toggleLED();
+    //_delay_ms(1000);
+    //LEDoff();
+    
+    // DEBOUNCE
+    // IF MODE = 1, MODE = 2
+    // IF MODE = 2, MODE = 3
+    // IF MODE = 0, MODE = 4
+    // IF MODE = 3, MODE = 0
+        // set speed 0
+        // hall effect enable
+    // IF MODE = 4, MODE = 0
 }
 
 

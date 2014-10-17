@@ -14,9 +14,10 @@
 #define SHIFT_REG PORTC
 #define SHIFT_DIR DDRC
 
+#define shiftLatch()      SHIFT_REG ^= (1 << LATCH)
+#define shiftLatchFets()  SHIFT_REG ^= (1 << FET1) | (1 << FET2) | (1 << LATCH)
+
 void shiftDataIn(uint8_t data);
 void shiftInit(void);
-void shiftToggleLatch(void);
-void shiftToggleFetsLatch(void);
 
 #endif

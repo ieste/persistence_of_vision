@@ -13,8 +13,10 @@ from USBDevice import USBDevice
 class InvalidFile(object):
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
+
 
 class POVApp(object):
     """Top level POV Display application"""
@@ -27,19 +29,19 @@ class POVApp(object):
         #Menu Bar
         self.menu = Menu(root)
         self.file = Menu(self.menu, tearoff=0)
-        self.file.add_command(label="New", command = self.new)
-        self.file.add_command(label="Open Image", command = self.OpenImage)
-        self.file.add_command(label="Save Image", command = self.save_image)
-        self.file.add_command(label="Upload", command = self.upload_image)
-        self.file.add_command(label="Exit", command = root.destroy)
-        self.menu.add_cascade(label="File", menu = self.file)
+        self.file.add_command(label="New", command=self.new)
+        self.file.add_command(label="Open Image", command=self.OpenImage)
+        self.file.add_command(label="Save Image", command=self.save_image)
+        self.file.add_command(label="Upload", command=self.upload_image)
+        self.file.add_command(label="Exit", command=root.destroy)
+        self.menu.add_cascade(label="File", menu=self.file)
         root.config(menu=self.menu)
 
         #Toolbar frame
         self.toolbar = Frame(root)
-        self.toolbar.grid(row=0, column=0, padx=(6,3), pady=6)
+        self.toolbar.grid(row=0, column=0, padx=(6, 3), pady=6)
 
-        #Set Colour - intialise colour as white
+        #Set Colour - intialize colour as white
         self.colour = StringVar()
         self.colour = "#FFFFFF"
 
@@ -48,15 +50,15 @@ class POVApp(object):
         self.c_select.bind("<Button-1>", self.c_select_click)
 
         #Tool Buttons
-        self.draw = Button(self.toolbar, text = "Draw")
+        self.draw = Button(self.toolbar, text="Draw")
         self.draw.pack(pady=2, fill=X)
-        self.line = Button(self.toolbar, text = "Line")
+        self.line = Button(self.toolbar, text="Line")
         self.line.pack(pady=2, fill=X)
-        self.clear = Button(self.toolbar, text = "Clear")
+        self.clear = Button(self.toolbar, text="Clear")
         self.clear.pack(pady=2, fill=X)
-        self.erase  = Button(self.toolbar, text = "Erase")
+        self.erase = Button(self.toolbar, text="Erase")
         self.erase.pack(pady=2, fill=X)
-        self.square = Button(self.toolbar, text = "Square")
+        self.square = Button(self.toolbar, text="Square")
         self.square.pack(pady=2, fill=X)
 
         #Tools Mouse Bind for tool buttons
@@ -68,7 +70,7 @@ class POVApp(object):
 
         #Canvas
         self.canvas = Canvas(root, bg="light grey", width=400, height=200, highlightthickness=0)
-        self.canvas.grid(row=0, column=1, sticky=N+W+E+S, padx=(3,6), pady=6)
+        self.canvas.grid(row=0, column=1, sticky=N+W+E+S, padx=(3, 6), pady=6)
         root.columnconfigure(1, weight=1)
 
         self.canvas.bind("<Configure>", self.on_canvas_resize)
@@ -93,16 +95,15 @@ class POVApp(object):
         #Select Size Frame
         self.select_size = Frame(root)
         self.select_size.grid(row=2, column=1, pady=5)
-        self.width_label = Label(self.select_size, text = 'Resize: ')
+        self.width_label = Label(self.select_size, text='Resize: ')
         self.width_label.pack(side=LEFT)
         self.width_entry = Entry(self.select_size, width = 10)
         self.width_entry.pack(side=LEFT)
         self.width_entry.bind("<Return>", self.enter_width)
 
         #Rotated view preview button - in select size frame
-        self.preview_button = Button(self.select_size, text = 'Preview', command = self.preview)
-        self.preview_button.pack(side=LEFT, padx = 30, ipadx = 30)
-
+        self.preview_button = Button(self.select_size, text='Preview', command=self.preview)
+        self.preview_button.pack(side=LEFT, pad =30, ipadx=30)
 
     #Returns image to blank, 360 pixel wide
     def new(self):
@@ -113,8 +114,8 @@ class POVApp(object):
 
     #Center the image when the canvas is resized
     def on_canvas_resize(self, e):
-        cw, ch = self.canvas.winfo_width(), self.canvas.winfo_height() # Canvas width & height
-        self.cxc, self.cyc = cw/2, ch/2 # Canvas x center & y center
+        cw, ch = self.canvas.winfo_width(), self.canvas.winfo_height()  # Canvas width & height
+        self.cxc, self.cyc = cw/2, ch/2  # Canvas x center & y center
         self.canvas.coords(self.tid, self.cxc, self.cyc)
 
     #Translate coordinates from the canvas reference to the image reference.
@@ -175,13 +176,13 @@ class POVApp(object):
         self.canvas.bind("<B1-Motion>", self.line_motion)
         self.canvas.bind("<ButtonRelease-1>", self.line_end)
 
-    #Sets the intial coordinates for the line draw function
+    #Sets the initial coordinates for the line draw function
     def line_start(self, e):
         self.x, self.y = self.translate_coords(e.x, e.y)
 
     def line_motion(self, e):
-        x0,y0 = (self.x, self.y)
-        x1,y1 = self.translate_coords(e.x, e.y)
+        x0, y0 = (self.x, self.y)
+        x1, y1 = self.translate_coords(e.x, e.y)
         temp_img = self.img.copy()
         self.d = ImageDraw.Draw(temp_img)
         self.d.line([x0, y0, x1, y1], fill=self.colour, width=2)
@@ -190,8 +191,8 @@ class POVApp(object):
 
     #Sets the end coordinates for the line draw function
     def line_end(self, e):
-        x0,y0 = (self.x, self.y)
-        x1,y1 = self.translate_coords(e.x, e.y)
+        x0, y0 = (self.x, self.y)
+        x1, y1 = self.translate_coords(e.x, e.y)
         self.d = ImageDraw.Draw(self.img)
         self.d.line([x0, y0, x1, y1], fill=self.colour, width=2)
         self.t = ImageTk.PhotoImage(self.img)
@@ -215,7 +216,7 @@ class POVApp(object):
 
     #Initialises draw coordinates, and draws single pixel at point
     def erase_start(self, e):
-        self.x0,self.y0 = self.translate_coords(e.x, e.y)
+        self.x0, self.y0 = self.translate_coords(e.x, e.y)
         self.d = ImageDraw.Draw(self.img)
         self.d.ellipse([self.x0-5, self.y0-5, self.x0+5, self.y0+5], fill='black', outline='black')
         self.t = ImageTk.PhotoImage(self.img)
@@ -223,7 +224,7 @@ class POVApp(object):
 
     #Establishes start and end coordinates for draw when mouse in motion
     def erase_motion(self, e):
-        self.x1,self.y1 = self.translate_coords(e.x, e.y)
+        self.x1, self.y1 = self.translate_coords(e.x, e.y)
         self.d = ImageDraw.Draw(self.img)
         self.d.line([self.x0, self.y0, self.x1, self.y1], fill='black', width=10)
         self.d.ellipse([self.x1-5, self.y1-5, self.x1+5, self.y1+5], fill='black', outline='black')
@@ -245,7 +246,7 @@ class POVApp(object):
         self.d = ImageDraw.Draw(self.img)
         self.text_width, self.text_height = self.d.textsize(self.text)
         
-        self.d.text((((self.w/2-((self.text_width)/2)), (self.h/2.0-(self.text_height)/2))),
+        self.d.text((self.w/2-(self.text_width/2), self.h/2.0-self.text_height/2),
                     self.text, fill=self.colour)
         self.t = ImageTk.PhotoImage(self.img)
         self.canvas.itemconfig(self.tid, image=self.t)
@@ -275,6 +276,80 @@ class POVApp(object):
     #Opens new window with image displayed as would appear on the POV display
     def preview(self):
 
+        #Initialise image data, height and width variables
+        self.preview_data = []
+        h = 0
+        w = 0
+
+        #Open a new window with canvas
+        self.rotate_preview = Toplevel()
+        self.preview_canvas = Canvas(self.rotate_preview, bg="light grey", width=96, height=96)
+        self.preview_canvas.pack()
+
+        #Checks pixel type and puts image data into list
+        self.pixel = self.img.getpixel((0,0))
+        if type(self.pixel) == tuple:
+            for i in list(self.img.getdata()):
+                self.preview_data.append(str(i[0]))
+        else:
+            for i in list(self.img.getdata()):
+                self.preview_data.append(str(i))
+
+        #Setting up image to be drawn
+        #Draws blank image, outside radius 96, inner radius 32
+        self.preview_image = Image.new('RGB', (96, 96), "#d3d3d3")
+        self.pidraw = ImageDraw.Draw(self.preview_image)
+        self.pidraw.ellipse([0, 0, 96, 96], fill="white")
+        self.pidraw.ellipse([32, 32, 64, 64], fill="#d3d3d3")
+
+        #Reverse mapping maths
+        #For rect coords (x, y) in rotated image, find radius d from centre (x=48, y=48)
+        #Find angle theta starting from 'negative y' axis (ie from first half y axis)
+        #Let r = height in original image
+        #Let theta = width in original image
+        #Get colour from original image data list and draw point on rotated image
+
+        #Problems so far: cannot divide by y=0 in atan, so range has to start from 1
+        #colour is in wrong format (255 = 'red', needs to be white)
+        #values of theta are not varying enough
+        #only works for full sized images
+        #maths probably is not correct
+        #need to reevaluate atan for each quadrant and only draw if r < height
+
+        for y in range(0, 96):
+            for x in range(0, 96):
+                r = 32-(int(math.hypot(x-48, y-48)-16))
+                if x < 48 and y < 48:
+                    theta = 180 - abs(int(math.degrees(math.atan((float(48-x)/(48-y))))))
+                elif x == 48 and y < 48:
+                    theta = 180
+                elif x < 48 and y == 48:
+                    theta = 90
+                elif x == 48 and y > 48:
+                    theta = 0
+                elif x > 48 and y == 48:
+                    theta = 270
+                elif x < 48 and y > 48:
+                    theta = abs(int(math.degrees(math.atan(float((48-x)/(y-48))))))
+                elif x > 48 and y < 48:
+                    theta = abs(int(math.degrees(math.atan(float(((x-48)/(48-y)))))))+180
+                elif x > 48 and y > 48:
+                    theta = abs(int(math.degrees(math.atan(float((y-48)/(x-48))))))+270
+                if r < 32 and r > 0:
+
+                    #print statement to check values
+                    #print ("x:{} y:{} r:{} theta:{}" .format(x, y, r, theta))
+
+                    colour = StringVar()
+                    colour = '#%02x%02x%02x' %(int(self.preview_data[self.w*r + theta]),int(self.preview_data[self.w*r + theta]),int(self.preview_data[self.w*r + theta]))
+                    self.pidraw.point((x, y), fill=colour)
+
+                    #print ("x:{} y:{} r:{} theta:{} colour:{}" .format(x, y, r, theta, colour))
+
+        self.piphoto = ImageTk.PhotoImage(self.preview_image)
+        self.preview_canvas.create_image(48,48, image=self.piphoto)
+
+        """
         #Initialise image data, height and width variables
         self.preview_data = []
         h = 0
@@ -337,6 +412,8 @@ class POVApp(object):
 
         self.piphoto = ImageTk.PhotoImage(self.preview_image)
         self.preview_canvas.create_image(48,48, image=self.piphoto)
+        """
+
 
     ## Menu
 
@@ -346,7 +423,7 @@ class POVApp(object):
         try:
             im = open(self.imagefile, 'rb')
             self.img=ImageParser.parse_image(im)
-            self.info =  ImageParser.get_info(im)
+            self.info = ImageParser.get_info(im)
             self.size = self.info[1]
             self.w = self.size[0]
             self.h = self.size[1]
@@ -360,7 +437,7 @@ class POVApp(object):
     #Saves image as P2 type .pgm for any given name
     def save_image(self):
         self.data = []
-        self.pixel = self.img.getpixel((0,0))
+        self.pixel = self.img.getpixel((0, 0))
         
         if type(self.pixel) == tuple:
             for i in list(self.img.getdata()):
@@ -372,19 +449,19 @@ class POVApp(object):
         self.data = '\n'.join(self.data)
 
         from tkFileDialog import asksaveasfilename
-        self.filename=asksaveasfilename(defaultextension = '.pgm')
+        self.filename = asksaveasfilename(defaultextension='.pgm')
         if self.filename:
-            f=open(self.filename, "w")
+            f = open(self.filename, "w")
             f.write('P2\n')
             f.write('{} {}\n' .format(self.w, self.h))
             f.write('255\n')
             i = 0
             j = 0
-            while i<self.h:
-                while j<(self.w*(i+1)):
+            while i < self.h:
+                while j < (self.w*(i+1)):
                     f.write('{} '.format(self.data.split()[j]))
-                    j+=1
-                i+=1
+                    j += 1
+                i += 1
                 f.write('\n')
             f.close()
 

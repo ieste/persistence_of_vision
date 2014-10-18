@@ -47,7 +47,12 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
             if (handshaking) {
                 handshaking = 0;
             } else {
-                read_page(pagesWritten - 1, (uint8_t*)buffer);
+                if (numPages == 90) {
+                    read_page(pagesWritten - 1, (uint8_t*)buffer);
+                } else {
+                    read_page(pagesToWrite[pagesWritten - 1],
+                              (uint8_t*)buffer);
+                }
             }
             
             // Send it to the computer for validation.
@@ -80,41 +85,60 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
  */
 uchar usbFunctionWrite(uchar *data, uchar len)
 {
-    uchar i;
-    
+    uint8_t i;
+ 
+    // We don't want to read in more than the 128 byte limit for messages.
     if(len > bytesRemaining) len = bytesRemaining;
     
+    // Store the sent data.
     for(i = 0; i < len; i++) {
         buffer[128 - bytesRemaining] = (*(data + i));
         bytesRemaining--;
     }
     
+    
+    // Once the whole message has been received, handle it appropriately.
     if(bytesRemaining == 0) {
         
+        /**
+         * If we are not waiting to write any pages, then the message is
+         * signaling that the host is about to send one or more pages to be
+         * written, and the first byte of this message tells us how many
+         * pages will be sent. 
+         */
         if (numPages == 0 && buffer[0] != 0) {
             
             handshaking = 1;
             numPages = buffer[0];
             
+            /** 
+             * If the host is not sending a whole image (90 pages), then it
+             * will have send a list of pages we need to write to.
+             */
             if (numPages < 90) {
                 for (i = 0; i < numPages; i++) {
                     pagesToWrite[i] = buffer[i];
                 }
             }
+            
         } else {
+            
             if (numPages == 90) {
                 write_page(pagesWritten, (uint8_t*)buffer);
             } else {
                 write_page(pagesToWrite[pagesWritten], (uint8_t*)buffer);
             }
+            
             pagesWritten++;
         }
         
+        // Ensure the indicator LED is on at the end of a data transfer.
         if (pagesWritten == numPages) {
             LEDon();
         }
         
-        return 1;   // end of transfer
+        // Return 1 to signal end of transfer.
+        return 1;
     }
     
     return 0;

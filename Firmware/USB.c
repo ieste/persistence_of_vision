@@ -1,16 +1,23 @@
 
+
 #include "USB.h"
 
 volatile uchar bytesRemaining;
+
 volatile uchar buffer[128];
 
 volatile uint32_t pagesWritten = 0;
+
 volatile uint8_t numPages = 0;
+
 volatile uint8_t pagesToWrite[128];
+
 volatile uint8_t handshaking = 1;
 
-/* USB report descriptor - this is stored in program memory. Taken from
- * hid-data VUSB example. */
+/**
+ * USB report descriptor - this is stored in program memory. Taken from
+ * hid-data VUSB example. 
+ */
 PROGMEM const char usbHidReportDescriptor[22] = {
     0x06, 0x00, 0xff,              // USAGE_PAGE (Generic Desktop)
     0x09, 0x01,                    // USAGE (Vendor Usage 1)
@@ -33,14 +40,17 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
     // HID Class request
     if((request->bmRequestType & USBRQ_TYPE_MASK) == USBRQ_TYPE_CLASS) {
 
-        // The host wants to receive data
+        // The host is requesting data.
         if(request->bRequest == USBRQ_HID_GET_REPORT) {
             
             // Read in most recent page written
-            if (handshaking) handshaking = 0;
-            else read_page(pagesWritten - 1, (uint8_t*)buffer);
+            if (handshaking) {
+                handshaking = 0;
+            } else {
+                read_page(pagesWritten - 1, (uint8_t*)buffer);
+            }
             
-            // Send it to the computer for validation
+            // Send it to the computer for validation.
             usbMsgPtr = (int)buffer;
             return 128;
           
@@ -64,7 +74,8 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
 }
 
 
-/* usbFunctionWrite() is called when the host sends a chunk of data to the
+/**
+ * This function is called when the host sends a chunk of data to the
  * device. For more information see the documentation in usbdrv/usbdrv.h.
  */
 uchar usbFunctionWrite(uchar *data, uchar len)

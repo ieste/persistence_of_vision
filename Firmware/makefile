@@ -16,7 +16,7 @@
 MCU = atmega328p
 
 # Target file name (without extension).
-TARGET = Main
+TARGET = main
 
 # Programming hardware: type avrdude -c ? to get a full listing.
 AVRDUDE_PROGRAMMER = usbasp
@@ -35,12 +35,12 @@ FORMAT = ihex
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c \
-      Shift.c \
-      HallEffect.c \
+      shift.c \
+      hallEffect.c \
       usbdrv/usbdrv.c \
       usbdrv/oddebug.c \
-      Flash.c \
-      Display.c \
+      flash.c \
+      display.c \
       USB.c 
 
 # List Assembler source files here. Make them always end in a capital .S.

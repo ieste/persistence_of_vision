@@ -26,7 +26,14 @@ class USBDevice:
                                          data_or_wLength=length)
 
     def write_pages(self, data):
+
         failed = []
+        handshake = array.array('B', [90] + [0]*127)
+
+        # send and receive handshake
+        self._write(handshake)
+        print self._read()[0]
+
         for i in range(len(data)):
             time.sleep(0.1)
             self._write(data[i])
@@ -35,9 +42,29 @@ class USBDevice:
                 if written[j] is not data[i][j]:
                     failed.append(i)
                     break
-        if len(failed):
-            print "failed pages: ", failed
-        #TODO handle failed pages (re-write)
+
+        while len(failed):
+            print "Failed pages:", failed, ". Resending..."
+            pages = failed[:]
+            failed = []
+            handshake = array.array('B', [len(pages)] + pages + [0]*(127-len(pages)))
+
+            #send and receive handshake
+            self._write(handshake)
+            print self._read()[0]
+
+            for i in pages:
+                time.sleep(0.1)
+                self._write(data[i])
+                written = self._read()
+                for j in range(128):
+                    if written[j] is not data[i][j]:
+                        failed.append(i)
+                        break
+
+            # will repeat until all pages are successfully written.
+
+        print "Transfer succeeded."
 
 
 

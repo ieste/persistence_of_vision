@@ -10,6 +10,9 @@ from PIL import Image
 
 class USBDevice:
 
+    #TODO Error handling in case of: "USBError: [Errno None] libusb0-dll:err [control_msg] sending control message failed, win error: A device attached to the system is not functioning."
+
+
     def __init__(self, vid=0x16C0):
         #TODO check vendor name and other details to ensure we have the right device
         #TODO handle return of multiple devices
@@ -32,7 +35,7 @@ class USBDevice:
 
         # send and receive handshake
         self._write(handshake)
-        print self._read()[0]
+        print "Writing", self._read()[0], "page(s)..."
 
         for i in range(len(data)):
             time.sleep(0.1)
@@ -43,7 +46,10 @@ class USBDevice:
                     failed.append(i)
                     break
 
+        tries = 0;
         while len(failed):
+            if tries > 3:
+                break
             print "Failed pages:", failed, ". Resending..."
             pages = failed[:]
             failed = []
@@ -51,20 +57,26 @@ class USBDevice:
 
             #send and receive handshake
             self._write(handshake)
-            print self._read()[0]
+            print "Writing", self._read()[0], "page(s)..."
 
             for i in pages:
                 time.sleep(0.1)
                 self._write(data[i])
                 written = self._read()
+                print written
+                print data[i]
                 for j in range(128):
                     if written[j] is not data[i][j]:
                         failed.append(i)
                         break
 
             # will repeat until all pages are successfully written.
+            tries += 1
 
-        print "Transfer succeeded."
+        if len(failed) is not 0:
+            print "Writing to pages", failed, "failed after 3 attempts. Aborted."
+        else:
+            print "Transfer succeeded."
 
 
 
@@ -86,8 +98,9 @@ Write a specific page or list of pages
 data = [array.array('B', [0]*128) for i in range(90)]
 print data
 """
+
+#avr = USBDevice()
 """
-avr = USBDevice()
 t1 = time.time()
 failed = []
 for i in range(90):

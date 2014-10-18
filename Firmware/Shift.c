@@ -1,6 +1,6 @@
 
 
-#include "Shift.h"
+#include "shift.h"
 
 
 void shiftInit(void) {
@@ -19,8 +19,11 @@ void shiftInit(void) {
     // Set all outputs to 0 to begin with.
     shiftDataIn(0);
     shiftDataIn(0);
+    // add a delay?
     shiftLatch();
-    shiftLatchFets();
+    // add a delay?
+    shiftLatch();
+    
 }
 
 

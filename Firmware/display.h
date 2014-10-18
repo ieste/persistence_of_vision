@@ -4,7 +4,9 @@
 
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <util/delay.h>
 
+#include "main.h" // needed to get mode??
 #include "hallEffect.h"
 #include "flash.h"
 #include "shift.h" // Merge??

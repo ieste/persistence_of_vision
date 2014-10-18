@@ -2,16 +2,44 @@
 
 #include "USB.h"
 
+/**
+ * Used while receiving data to keep track of how many bytes still need to be
+ * received (data is not necessarily all sent at once, so the 
+ * usbFunctionWrite() method may be called multiple times).
+ */
 volatile uchar bytesRemaining;
 
+/**
+ * A temporary buffer for storing data that is sent/received over USB before
+ * it is written to program memory or sent to the host.
+ */
 volatile uchar buffer[128];
 
+/**
+ * Stores the number of pages written during an in-progress data transfer, so
+ * that when a page of data is received we can calculate which address to write
+ * the data in to.
+ */
 volatile uint32_t pagesWritten = 0;
 
+/**
+ * Stores the number of pages that need to be written during the current data
+ * transfer so that when know what all the data has been sent.
+ */
 volatile uint8_t numPages = 0;
 
+/**
+ * Used to store page numbers so that we can only write to specific pages 
+ * rather than having to write a whole image to consecutive pages. This is used
+ * to re-write bad pages (where writing failed on the first attempt.
+ */
 volatile uint8_t pagesToWrite[128];
 
+/**
+ * Flag to indicate whether the most recent data transfer was a "hand shake",
+ * i.e. did not consist of data to be stored to program memory, but rather
+ * provided information about an incoming data transfer.
+ */
 volatile uint8_t handshaking = 1;
 
 /**
@@ -32,10 +60,15 @@ PROGMEM const char usbHidReportDescriptor[22] = {
 };
 
 
+/**
+ * This function is used by the USB driver to determine how to handle an
+ * USB request from the host. For more details see the documentation in 
+ * usbdrv/usbdrv.h.
+ */
 usbMsgLen_t usbFunctionSetup(uchar data[8])
 {
     // Cast data to 'usbRequest_t *' for easier access to parameters.
-    usbRequest_t * request = (usbRequest_t *) data;
+    usbRequest_t *request = (usbRequest_t*) data;
     
     // HID Class request
     if((request->bmRequestType & USBRQ_TYPE_MASK) == USBRQ_TYPE_CLASS) {
@@ -43,10 +76,12 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
         // The host is requesting data.
         if(request->bRequest == USBRQ_HID_GET_REPORT) {
             
-            // Read in most recent page written
             if (handshaking) {
+                // If handshaking, we send back data from the buffer rather
+                // than retreiving it from program memory.
                 handshaking = 0;
             } else {
+                // Read in the most recent page written.
                 if (numPages == 90) {
                     read_page(pagesWritten - 1, (uint8_t*)buffer);
                 } else {
@@ -63,6 +98,9 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
         } else if (request->bRequest == USBRQ_HID_SET_REPORT) {
         
             bytesRemaining = 128;
+            
+            // Toggle LED for each page transfer so that the LED blinks
+            // during data transfer.
             toggleLED();
             
             if (pagesWritten == numPages) {
@@ -123,6 +161,7 @@ uchar usbFunctionWrite(uchar *data, uchar len)
             
         } else {
             
+            // Write the data in buffer to the appropriate location.
             if (numPages == 90) {
                 write_page(pagesWritten, (uint8_t*)buffer);
             } else {

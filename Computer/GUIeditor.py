@@ -4,6 +4,7 @@ import tkColorChooser
 from PIL import Image, ImageTk, ImageDraw, ImageFont, ImageColor
 from PIL import ImageFile
 import math
+import os
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 import ImageParser
@@ -102,8 +103,14 @@ class POVApp(object):
         self.width_entry.bind("<Return>", self.enter_width)
 
         #Rotated view preview button - in select size frame
-        self.preview_button = Button(self.select_size, text='Preview', command=self.preview)
-        self.preview_button.pack(side=LEFT, padx=30, ipadx=30)
+        self.preview_button = Button(self.select_size, text='Update Preview', command=self.preview)
+        self.preview_button.pack(side=LEFT, padx=15, ipadx=15)
+
+        #Preview canvas
+        self.preview_multiplier = 3 #How many times bigger to show the preview
+        self.preview_canvas = Canvas(root, bg="light grey", width=96*self.preview_multiplier, height=96*self.preview_multiplier)
+        self.preview_canvas.grid(row=3, column=1)
+
 
 
     #Returns image to blank, 360 pixel wide
@@ -138,7 +145,8 @@ class POVApp(object):
 
     #Default state for mouse motion
     def mouse_motion(self, e):
-        print self.translate_coords(e.x, e.y)
+        #print self.translate_coords(e.x, e.y)
+        return 0
 
     #Default state for mouse release
     def mouse_release(self, e):
@@ -146,7 +154,7 @@ class POVApp(object):
 
     ## Draw
 
-    #Binds events to draw when draw button is pressed    
+    #Binds events to draw when draw button is pressed
     def draw_click(self, e):
         self.canvas.bind("<Button-1>", self.draw_start)
         self.canvas.bind("<B1-Motion>", self.draw_motion)
@@ -243,14 +251,16 @@ class POVApp(object):
 
     #Draws text from entry widget onto image centred
     def preview_text(self, e):
+        font = ImageFont.load(os.path.dirname(__file__) + '/pilfonts/courB14.pil')
         self.text = self.text_entry.get()
         self.d = ImageDraw.Draw(self.img)
         self.text_width, self.text_height = self.d.textsize(self.text)
-        
+
         self.d.text((((self.w/2-((self.text_width)/2)), (self.h/2.0-(self.text_height)/2))),
-                    self.text, fill=self.colour)
+                    self.text, fill=self.colour, font=font)
         self.t = ImageTk.PhotoImage(self.img)
-        self.canvas.itemconfig(self.tid, image=self.t)
+        #self.canvas.itemconfig(self.tid, image=self.t)
+        self.canvas.create_image(200, 100, image=self.t)
 
     ## Resize
 
@@ -277,144 +287,44 @@ class POVApp(object):
     #Opens new window with image displayed as would appear on the POV display
     def preview(self):
 
-        #Initialise image data, height and width variables
-        self.preview_data = []
-        h = 0
-        w = 0
+        # Define size variables
+        inr = 16*self.preview_multiplier # Inner Radius
+        cen = 48*self.preview_multiplier # Center
+        size = 96*self.preview_multiplier # Size
 
-        #Open a new window with canvas
-        self.rotate_preview = Toplevel()
-        self.preview_canvas = Canvas(self.rotate_preview, bg="light grey", width=96, height=96)
-        self.preview_canvas.pack()
-
-        #Checks pixel type and puts image data into list
-        self.pixel = self.img.getpixel((0, 0))
-        if type(self.pixel) == tuple:
-            for i in list(self.img.getdata()):
-                self.preview_data.append(str(i[0]))
-        else:
-            for i in list(self.img.getdata()):
-                self.preview_data.append(str(i))
-
-        #Setting up image to be drawn
-        #Draws blank image, outside radius 96, inner radius 32
-        self.preview_image = Image.new('RGB', (96, 96), "#d3d3d3")
-        self.pidraw = ImageDraw.Draw(self.preview_image)
-        self.pidraw.ellipse([0, 0, 96, 96], fill="white")
-        self.pidraw.ellipse([32, 32, 64, 64], fill="#d3d3d3")
+        #Create a new preview image
+        self.preview_image = Image.new('RGB', (size, size), "#d3d3d3")
+        pidraw = ImageDraw.Draw(self.preview_image)
 
         #Reverse mapping maths
-        #For rect coords (x, y) in rotated image, find radius d from centre (x=48, y=48)
-        #Find angle theta starting from 'negative y' axis (ie from first half y axis)
+        #For each rect coords (x, y) in rotated image
+        #Convert to cartesian coords with origin at (cen, cen)
+        #Find radius r from the origin
+        #Find angle theta using atan2
         #Let r = height in original image
         #Let theta = width in original image
-        #Get colour from original image data list and draw point on rotated image
+        #Get colour from original image
 
-        #Problems so far: cannot divide by y=0 in atan, so range has to start from 1
-        #colour is in wrong format (255 = 'red', needs to be white)
-        #values of theta are not varying enough
-        #only works for full sized images
-        #maths probably is not correct
-        #need to reevaluate atan for each quadrant and only draw if r < height
+        for x in xrange(size):
+            for y in xrange(size):
+                xc, yc = x-cen, cen-y
 
-        for y in range(0, 96):
-            for x in range(0, 96):
-                r = 32-(int(math.hypot(x-48, y-48)-16))
-                if x < 48 and y < 48:
-                    theta = 180 - abs(int(math.degrees(math.atan((float(48-x)/(48-y))))))
-                elif x == 48 and y < 48:
-                    theta = 180
-                elif x < 48 and y == 48:
-                    theta = 90
-                elif x == 48 and y > 48:
-                    theta = 0
-                elif x > 48 and y == 48:
-                    theta = 270
-                elif x < 48 and y > 48:
-                    theta = abs(int(math.degrees(math.atan(float((48-x)/(y-48))))))
-                elif x > 48 and y < 48:
-                    theta = abs(int(math.degrees(math.atan(float(((x-48)/(48-y)))))))+180
-                elif x > 48 and y > 48:
-                    theta = abs(int(math.degrees(math.atan(float((y-48)/(x-48))))))+270
-                if r < 32 and r > 0:
+                r = int(float(math.hypot(xc, yc) - inr) / self.preview_multiplier)
+                if r >= 32 or r < 0:
+                    continue
 
-                    #print statement to check values
-                    #print ("x:{} y:{} r:{} theta:{}" .format(x, y, r, theta))
+                theta = math.degrees(math.atan2(xc, yc))
+                if theta < 0:
+                    theta = 360 + theta
+                #Rotate so the center is always at the top
+                theta = int(theta + 0.5*self.w)%360
 
-                    colour = StringVar()
-                    colour = '#%02x%02x%02x' %(int(self.preview_data[self.w*r + theta]),int(self.preview_data[self.w*r + theta]),int(self.preview_data[self.w*r + theta]))
-                    self.pidraw.point((x, y), fill=colour)
+                pixel = self.img.getpixel((theta%self.w, 31-r))
 
-                    #print ("x:{} y:{} r:{} theta:{} colour:{}" .format(x, y, r, theta, colour))
+                pidraw.point((x, y), fill=pixel)
 
         self.piphoto = ImageTk.PhotoImage(self.preview_image)
-        self.preview_canvas.create_image(48,48, image=self.piphoto)
-
-        """
-        #Initialise image data, height and width variables
-        self.preview_data = []
-        h = 0
-        w = 0
-
-        #Open a new window with canvas
-        self.rotate_preview = Toplevel()
-        self.preview_canvas = Canvas(self.rotate_preview, bg="light grey", width=96, height=96)
-        self.preview_canvas.pack()
-
-        #Checks pixel type and puts image data into list
-        self.pixel = self.img.getpixel((0,0))        
-        if type(self.pixel) == tuple:
-            for i in list(self.img.getdata()):
-                self.preview_data.append(str(i[0]))
-        else:
-            for i in list(self.img.getdata()):
-                self.preview_data.append(str(i))
-                
-        #Setting up image to be drawn
-        #Draws blank image, outside radius 96, inner radius 32
-        self.preview_image = Image.new('RGB', (96, 96), "#d3d3d3")
-        self.pidraw = ImageDraw.Draw(self.preview_image)
-        self.pidraw.ellipse([0,0,96,96], fill="white")
-        self.pidraw.ellipse([32,32,64,64], fill="#d3d3d3")
-
-        #Reverse mapping maths
-        #For rect coords (x, y) in rotated image, find radius d from centre (x=48, y=48)
-        #Find angle theta starting from 'negative y' axis (ie from first half y axis)
-        #Let r = height in original image
-        #Let theta = width in original image
-        #Get colour from original image data list and draw point on rotated image
-
-        #Problems so far: cannot divide by y=0 in atan, so range has to start from 1
-        #colour is in wrong format (255 = 'red', needs to be white)
-        #values of theta are not varying enough
-        #only works for full sized images
-        #maths probably is not correct
-        #need to reevaluate atan for each quadrant and only draw if r < height
-        
-        for y in range(1,96):
-            for x in range(1,96):
-                r = 32-int(math.hypot(x-48, y-48)-16)
-                if x < 48 and y <48:
-                    theta = int(math.degrees(math.atan((48-x)/(48-y))))
-                elif x < 48 and y > 48:
-                    theta = int(math.degrees(math.atan((48-x)/y)))
-                elif x > 48 and y <48:
-                    theta = int(math.degrees(math.atan((x/(48-y)))))
-                elif x > 48 and y > 48:
-                    theta = int(math.degrees(math.atan(x/y)))
-                if r<32 and theta <360:
-                    
-                    #print statement to check values
-                    #print ("x:{} y:{} r:{} theta:{}" .format(x, y, r, theta))
-
-                    colour = StringVar()
-                    colour = int(self.preview_data[self.w*r + theta])
-                    self.pidraw.point((x, y), fill=colour)                   
-
-        self.piphoto = ImageTk.PhotoImage(self.preview_image)
-        self.preview_canvas.create_image(48,48, image=self.piphoto)
-        """
-
+        self.preview_canvas.create_image(cen, cen, image=self.piphoto)
 
     ## Menu
 
@@ -429,7 +339,6 @@ class POVApp(object):
             self.w = self.size[0]
             self.h = self.size[1]
             self.t = ImageTk.PhotoImage(self.img)
-            self.canvas.delete(ALL)
             self.canvas.itemconfig(self.tid, image=self.t)
         except InvalidFile as e:
             tkMessageBox.showwarning(title="Invalid File",
@@ -439,7 +348,7 @@ class POVApp(object):
     def save_image(self):
         self.data = []
         self.pixel = self.img.getpixel((0,0))
-        
+
         if type(self.pixel) == tuple:
             for i in list(self.img.getdata()):
                 self.data.append(str(i[0]))

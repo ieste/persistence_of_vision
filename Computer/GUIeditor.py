@@ -118,7 +118,7 @@ class POVApp(object):
         self.w, self.h = 360, 32
         self.img = Image.new('RGB', (self.w, self.h), "black")
         self.t = ImageTk.PhotoImage(self.img)
-        self.tid = self.canvas.create_image(200, 100, image=self.t)
+        self.tid = self.canvas.create_image(self.canvas.winfo_width()/2, self.canvas.winfo_height()/2, image=self.t)
 
     #Center the image when the canvas is resized
     def on_canvas_resize(self, e):

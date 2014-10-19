@@ -213,7 +213,7 @@ class POVApp(object):
     def clear_click(self, e):
         self.img = Image.new('RGB', (self.w, self.h), "black")
         self.t = ImageTk.PhotoImage(self.img)
-        self.tid = self.canvas.create_image(self.cxc, self.cyc, image=self.t)
+        self.canvas.itemconfig(self.tid, image=self.t)
 
     ## Erase
 
@@ -256,11 +256,14 @@ class POVApp(object):
         self.d = ImageDraw.Draw(self.img)
         self.text_width, self.text_height = self.d.textsize(self.text)
 
-        self.d.text((((self.w/2-((self.text_width)/2)), (self.h/2.0-(self.text_height)/2))),
+        self.d.text((self.w/2-self.text_width/2, self.h/2-self.text_height/2),
                     self.text, fill=self.colour, font=font)
+
         self.t = ImageTk.PhotoImage(self.img)
-        #self.canvas.itemconfig(self.tid, image=self.t)
-        self.canvas.create_image(200, 100, image=self.t)
+        #Update the image instead of creating a new one,
+        #required so that we can resize the canvas.
+        self.canvas.itemconfig(self.tid, image=self.t)
+        #self.canvas.create_image(200, 100, image=self.t)
 
     ## Resize
 
@@ -314,12 +317,11 @@ class POVApp(object):
                     continue
 
                 theta = math.degrees(math.atan2(xc, yc))
-                if theta < 0:
-                    theta = 360 + theta
                 #Rotate so the center is always at the top
                 theta = int(theta + 0.5*self.w)%360
 
-                pixel = self.img.getpixel((theta%self.w, 31-r))
+                #theta = theta % self.w #Repeat the pattern around the wheel
+                pixel = self.img.getpixel((theta, 31-r)) if theta < self.w else '#000'
 
                 pidraw.point((x, y), fill=pixel)
 

@@ -6,6 +6,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+#include "globalDefs.h"
+
 /* Set up the ports/pin for the hall effect switch. */
 #define HALL_REG PORTD
 #define HALL_DIR DDRD
@@ -34,12 +36,7 @@ void hall_effect_disable(void);
 /**
  *
  */
-uint8_t get_speed(void);
-
-/**
- * 
- */
-void set_speed(uint8_t s);
+uint32_t get_cycles(void);
 
 /**
  * Get the distance travelled since the board was powered on.

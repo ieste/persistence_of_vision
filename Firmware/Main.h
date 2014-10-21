@@ -1,33 +1,43 @@
 
+
 #ifndef MAIN_H
 #define MAIN_H
 
-
-#define F_CPU 16000000UL     // 16 MHz
+#include "globalDefs.h"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <util/delay.h>
 
 #include "shift.h"
-//#include "USB.h"
-#include "usbdrv/usbdrv.h"
+#include "USB.h"
 #include "hallEffect.h"
 #include "display.h"
 
-#define LED_REG PORTD
-#define LED_DIR DDRD
-#define MODE_REG PIND
-#define MODE_DIR PORTD
-#define LED     0
-#define MODE    1
-#define toggleLED() PORTD ^= (1<<LED)
-#define LEDon() PORTD |= (1 << LED)
-#define LEDoff() PORTD &= ~(1 << LED)
+/* Set up ports/pin for the mode switch. */
+#define MODE_REG    PIND
+#define MODE_DIR    DDRD
+#define MODE        1
 
-void LED_init(void);
-void mode_init(void);
+/**
+ * Initialise by calling the respective init functions for each of the system
+ * components, set registers to indicate interrupts are in NRWW memory, and
+ * set the mode.
+ */
 void initialise(void);
+
+/**
+ * Initialise the indicator LED by setting the data direction register to
+ * output and turning the LED on.
+ */
+void LED_init(void);
+
+/**
+ * Initialise the mode switch by setting the data direction register, reading
+ * in the current mode and setting up pin change interrupts for when the switch
+ * is changed.
+ */
+void mode_init(void);
+
 
 
 

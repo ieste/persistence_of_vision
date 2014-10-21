@@ -61,7 +61,18 @@ PROGMEM const char usbHidReportDescriptor[22] = {
 
 
 /**
- * This function is used by the USB driver to determine how to handle an
+ * Initialise USB communication by calling the driver's initialise function.
+ */
+void USB_init(void) {
+    cli();
+    usbInit();
+    _delay_ms(200);
+    sei();
+}
+
+
+/**
+ * This function is used by the USB driver to determine how to handle a
  * USB request from the host. For more details see the documentation in 
  * usbdrv/usbdrv.h.
  */
@@ -151,7 +162,7 @@ uchar usbFunctionWrite(uchar *data, uchar len)
             
             /** 
              * If the host is not sending a whole image (90 pages), then it
-             * will have send a list of pages we need to write to.
+             * will have sent a list of pages we need to write to.
              */
             if (numPages < 90) {
                 for (i = 0; i < numPages; i++) {

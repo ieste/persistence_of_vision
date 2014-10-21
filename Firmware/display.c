@@ -1,63 +1,58 @@
 
 #include "display.h"
 
-
+#define ACCURACY 6
 
 // Store whether display is on so others can access this information.
 extern volatile uint8_t mode;
 volatile uint16_t position = 0;
 volatile uint8_t mosfet = 0;
-
 volatile uint8_t bitPosition = 0;
+volatile uint8_t on = 0;
+volatile uint16_t delay = 480;
+//volatile uint16_t delay = 6;
 
-void enableDisplay(void) {
-    
-    /*
-     MATHS:
-     Max speed: 250 RPM
-     250/60 = 4.167 RPS
-     4.16667.. * 360 = 1500 degrees/second
-     1/1500 = 0.00066667 seconds per pixel
-     16 delays add up to ~667 microseconds
-     1+2+4+8+16+32+64+128 = 255 (shortest delay is [half of] 667/255 microseconds)
-     1/1500*1000*1000/255/2 =
-     Shortest delay is 1.30718 microseconds.
-     
-     Min speed: 60 RPM
-     60/60 = 1 RPS
-     1 * 360 = 360 degress/second
-     1/360 = 0.00277778 seconds per pixel
-     16 delays add up to ~2778 microseconds
-     (shortest delay is [half of] 2778/255 microseconds)
-     2778/255/2 = 5.447 microseconds.
-     
-     1.30718/(1/16000000*1000*1000)
-     1,2,4,8,16,32,64,128
-     20,40,80,160,320,640,1280,2560
-     87, ..., 10240
-     
-     Conclusion:
-     Don't use the prescaler.
-     */
-    
+volatile uint8_t degree[ACCURACY];
+
+void enable_display(void) {
+
     cli();
     TCCR1B |= (1 << CS10); // Divide clock by 1
     //TCCR1B |= (1 << CS10) | (1 << CS12); // Divide by 1024
+    
     //OCR1A = 15624; // One second delay (when dividing by 1024).
-    OCR1A = 60;
+    OCR1A = delay;
+    
     TCCR1B |= (1 << WGM12); // Put timer into CTC mode
     TIMSK1 |= (1 << OCIE1A); // Enable the interrupt
+    
+    reset_fets();
+    
+    on = 1;
+    mosfet = 0;
     sei();
 }
 
-void disableDisplay(void) {
+void disable_display(void) {
     TIMSK1 &= ~(1 << OCIE1A);
+    shift_clear();
+    on = 0;
+}
+
+uint8_t display_on(void) {
+    return on;
 }
 
 
 ISR(TIMER1_COMPA_vect) {
- 
+    
     uint8_t data[2];
+    //uint8_t i;
+
+    //data[0] = degree[bitPosition * 2];
+    //data[1] = degree[bitPosition * 2 + 1];
+   
+    
 
     // Set the data to display
     switch (mode) {
@@ -80,29 +75,30 @@ ISR(TIMER1_COMPA_vect) {
             data[0] = 0;
             data[1] = 0;
             break;
+        default:
+            data[0] = 0;
+            data[1] = 0;
     }
+    
     
     // Display it.
-    // Note: Data is displayed on the rising edge of the latch.
-    shiftDataIn(data[0]);
-    shiftDataIn(data[1]);
-    shiftLatchFets();
-    shiftLatch();
+    output_data(data);
     
-    // make any modifications to the interrupt
+    // Make any modifications to the interrupt.
     bitPosition += mosfet;
-    if (mosfet) {
-        bitPosition &= 7;
-    }
-    if (bitPosition == 0) {
-        OCR1A = 60;
-    }
+    
     OCR1A <<= mosfet;
+    mosfet ^= 1;
+    
+    if (bitPosition == ACCURACY) {
+        bitPosition = 0;
+        OCR1A = delay;
+        
+        // Set the data for the next degree:
+        //for (i = 0; i < )
+    }
     
     // Increase position. Position wraps around to 0.
     position += 2;
-    if (position == 2880) position = 0;
-    
-    // Toggle the mosfet value.
-    mosfet ^= 1;
+    if (position == (360 * ACCURACY)) position = 0;
 }

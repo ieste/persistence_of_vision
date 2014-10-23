@@ -10,6 +10,8 @@
 #include "usbdrv.h"
 #include "oddebug.h"
 
+extern volatile uint8_t USB_connected;
+
 /*
 General Description:
 This module implements the C-part of the USB driver. See usbdrv.h for a
@@ -308,6 +310,7 @@ USB_PUBLIC void usbSetInterrupt3(uchar *data, uchar len)
  */
 static inline usbMsgLen_t usbDriverDescriptor(usbRequest_t *rq)
 {
+    USB_connected = 1;
 usbMsgLen_t len = 0;
 uchar       flags = USB_FLG_MSGPTR_IS_ROM;
 
@@ -421,7 +424,7 @@ skipMsgPtrAssignment:
 static inline void usbProcessRx(uchar *data, uchar len)
 {
 usbRequest_t    *rq = (void *)data;
-
+USB_connected = 1;
 /* usbRxToken can be:
  * 0x2d 00101101 (USBPID_SETUP for setup data)
  * 0xe1 11100001 (USBPID_OUT: data phase of setup transfer)
@@ -490,6 +493,7 @@ usbRequest_t    *rq = (void *)data;
  */
 static uchar usbDeviceRead(uchar *data, uchar len)
 {
+
     if(len > 0){    /* don't bother app with 0 sized reads */
 #if USB_CFG_IMPLEMENT_FN_READ
         if(usbMsgFlags & USB_FLG_USE_USER_RW){
@@ -526,6 +530,8 @@ static inline void usbBuildTxBlock(void)
 {
 usbMsgLen_t wantLen;
 uchar       len;
+    
+
 
     wantLen = usbMsgLen;
     if(wantLen > 8)

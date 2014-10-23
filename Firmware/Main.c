@@ -1,7 +1,7 @@
 
 
 #include "main.h"
-#include <avr/sleep.h>
+
 #include "shift.h"
 
 
@@ -11,6 +11,12 @@
  * display mode.
  */
 volatile uint8_t mode = 0;
+
+
+volatile uint8_t USB_connected = 0;
+
+uint32_t count = 0;
+
 
 
 /**
@@ -25,30 +31,47 @@ int main(void) {
     while (1) {
         
         // Poll the USB connection.
-        //usbPoll();
-        /*
+        usbPoll();
+        
         // Manage speed and enable/disable display accordingly.
-        if (mode == 0 || mode == 4) {
-            if (get_cycles() > 16000000 || get_cycles() == 0) {
-                if (display_on()) { // change to if display is on
+        if (!USB_connected && (mode == 0 || mode == 4)) {
+        
+            if (get_cycles() == 0 || get_cycles() > 16000000) {
+               
+                if (++count > 50000) {
+                    cli();
                     disable_display();
-                }
-            } else if (~display_on()) { // Change to if display is off
+                    shift_clear();
+                    //LEDoff();
+                    sleep();
+                    //LEDon();
+                    // Reset some stuff...
+                    hall_effect_enable();
+                    start_revolution();
+                    count = 0;
+               }
+                
+            } else if (!display_on()) {
                 enable_display();
             }
         }
-         */
-        
-        
     }
 }
 
 
 void initialise(void) {
     
-    // ISRs are located in NRWW memory
+    // ISRs are located in NRWW memory.
     MCUCR |= (1 << IVCE);
     MCUCR = 0x02;
+    
+    // Use the power reduction register to disable unused modules on the AVR.
+    ADCSRA &= ~(1 << ADEN); // Disable the ADC
+    PRR |= ((1 << PRTWI) | (1 << PRTIM2) | (1 << PRSPI) | (1 << PRUSART0) |
+            (1 << PRADC));
+    
+    // Set sleep mode to power-down mode.
+    SMCR = (SMCR & ~((1 << SM2) | (1 << SM0))) | (1 << SM1);
     
     // Initialise the system components.
     shift_init();
@@ -59,26 +82,10 @@ void initialise(void) {
     
     // If the mode is 1, we hard code the speed rather than reading from the
     // hall effect switch.
-    //if (mode == 1) {
-    //    hall_effect_disable();
-    //    enable_display();
-    //}
-    
-    // Sleep mode test
-    //shift_disable();
-    //fets_low();
-    //PCICR &= ~(1 << PCIE2);
-    //hall_effect_disable();
-    //disable_display();
-    //sleep_enable();
-    //sei();
-    //sleep_cpu();
-    //sleep_disable();
-    //toggleLED();
-    //shift_data_in(255);
-    toggle_latch();
-    toggle_latch();
-    
+    if (mode == 1) {
+        hall_effect_disable();
+        enable_display();
+    }
 }
 
 
@@ -92,6 +99,8 @@ void LED_init(void) {
 
 void mode_init(void) {
     
+    uint8_t sreg = SREG;
+    
     // Set the mode switch to an input.
     MODE_DIR &= ~(1 << MODE);
     
@@ -102,9 +111,21 @@ void mode_init(void) {
         mode = 0;
     }
     
+    cli();
+    
     // Enable pin change interrupts on the mode switch.
     PCMSK2 |= (1 << PCINT17);
     PCICR |= (1 << PCIE2);
+    
+    SREG = sreg;
+}
+
+
+void sleep(void) {
+    sleep_enable();
+    sei();
+    sleep_cpu();
+    sleep_disable();
 }
 
 
@@ -114,9 +135,6 @@ void mode_init(void) {
  * interrupts.
  */
 ISR(PCINT2_vect) {
-    
-    //toggleLED();
-    
     if (mode == 0) {
         mode = 4;
     } else if (mode == 4) {
@@ -128,6 +146,7 @@ ISR(PCINT2_vect) {
     } else if (mode == 3) {
         mode = 0;
         hall_effect_enable();
+        disable_display();
     }
 }
 

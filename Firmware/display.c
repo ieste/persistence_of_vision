@@ -1,25 +1,40 @@
 
+
 #include "display.h"
 
-#define ACCURACY 6
 
-// Store whether display is on so others can access this information.
+/**
+ * Access the mode variable from main so that we know what we should be
+ * displaying.
+ */
 extern volatile uint8_t mode;
-volatile uint16_t position = 0;
-volatile uint8_t mosfet = 0;
-volatile uint8_t bitPosition = 0;
-volatile uint8_t on = 0;
-volatile uint16_t delay = 480;
-//volatile uint16_t delay = 6;
 
-volatile uint8_t degree[ACCURACY];
+/**
+ * Our position in the rotation - used to find which address to use when 
+ * reading from program memory.
+ */
+volatile uint16_t position = 0;
+
+/**
+ *
+ */
+volatile uint8_t mosfet = 0;
+
+/**
+ * Flag which stores whether or not the display is turned on.
+ */
+volatile uint8_t on = 0;
+
+
+extern volatile uint16_t delay;
+
 
 void enable_display(void) {
 
     cli();
     TCCR1B |= (1 << CS10); // Divide clock by 1
-    //TCCR1B |= (1 << CS10) | (1 << CS12); // Divide by 1024
     
+    //TCCR1B |= (1 << CS10) | (1 << CS12); // Divide by 1024
     //OCR1A = 15624; // One second delay (when dividing by 1024).
     OCR1A = delay;
     
@@ -27,11 +42,14 @@ void enable_display(void) {
     TIMSK1 |= (1 << OCIE1A); // Enable the interrupt
     
     reset_fets();
+    position = 0;
+    mosfet = 0;
     
     on = 1;
-    mosfet = 0;
+
     sei();
 }
+
 
 void disable_display(void) {
     TIMSK1 &= ~(1 << OCIE1A);
@@ -39,66 +57,84 @@ void disable_display(void) {
     on = 0;
 }
 
+
 uint8_t display_on(void) {
     return on;
 }
 
 
+void start_revolution(void) {
+    reset_fets();
+    position = 0;
+    mosfet = 0;
+    OCR1A = delay;
+}
+
+/**
+ * Interrupt service routine for LED driving. Although this would be neater
+ * using functions from shift.c, it has instead been hard coded to avoid 
+ * function calls so the the number of clock cycles this routine takes is
+ * minimised.
+ */
 ISR(TIMER1_COMPA_vect) {
     
     uint8_t data[2];
-    //uint8_t i;
-
-    //data[0] = degree[bitPosition * 2];
-    //data[1] = degree[bitPosition * 2 + 1];
-   
+    uint8_t i;
     
-
-    // Set the data to display
-    switch (mode) {
-        case 0: // Mode 0 - data from program memory
-        case 1: // Mode 1 - data from program memory
-            data[0] = read_byte(position);
-            data[1] = read_byte(position + 1);
-            break;
-        case 2: // Mode 2 - data is hard coded
-            data[0] = 255;
-            data[1] = 255;
-            break;
-        case 3: // Mode 3 - data is hard coded
-            data[0] = (mosfet << 7);
-            data[1] = 0;
-            break;
-        case 4: // Mode 4 - data needs to be generated based on info.
-            // Get distance travelled...
-            // Get speed...
-            data[0] = 0;
-            data[1] = 0;
-            break;
-        default:
-            data[0] = 0;
-            data[1] = 0;
+    // Set output data based on current mode.
+    if (mode == 0 || mode == 1) {
+        data[0] = read_byte(position);
+        data[1] = read_byte(position + 1);
+    } else if (mode == 2) {
+        data[0] = 255;
+        data[1] = 255;
+    } else if (mode == 3) {
+        data[0] = (mosfet << 7);
+        data[1] = 0;
+        //data[0] = mosfet*255;
+        //data[1] = mosfet*255;
+    } else {
+        // modify later to deal with mode 4.
+        data[0] = 0;
+        data[1] = 0;
     }
     
     
-    // Display it.
-    output_data(data);
+    // Output data
+    for (i = 0; i < 8; i++) {
+        if (data[0] & 128) {
+            SHIFT_REG |= (1 << DATA);
+        } else {
+            SHIFT_REG &= (~(1 << DATA));
+        }
+
+        data[0] <<= 1;
+
+        SHIFT_REG ^= (1 << CLOCK);
+        SHIFT_REG ^= (1 << CLOCK);
+    }
     
-    // Make any modifications to the interrupt.
-    bitPosition += mosfet;
-    
-    OCR1A <<= mosfet;
-    mosfet ^= 1;
-    
-    if (bitPosition == ACCURACY) {
-        bitPosition = 0;
-        OCR1A = delay;
+    for (i = 0; i < 8; i++) {
+        if (data[1] & 128) {
+            SHIFT_REG |= (1 << DATA);
+        } else {
+            SHIFT_REG &= (~(1 << DATA));
+        }
+        data[1] <<= 1;
         
-        // Set the data for the next degree:
-        //for (i = 0; i < )
+        SHIFT_REG ^= (1 << CLOCK);
+        SHIFT_REG ^= (1 << CLOCK);
     }
     
+    toggle_latch_fets();
+    toggle_latch();
+    
+    
+    mosfet ^= 1;
+
     // Increase position. Position wraps around to 0.
     position += 2;
-    if (position == (360 * ACCURACY)) position = 0;
+    if (position == 11520) position = 0;
+    
+    
 }

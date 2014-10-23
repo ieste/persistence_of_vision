@@ -26,18 +26,7 @@ void shift_data_in(uint8_t data) {
     uint8_t i;
     
     // Loop through each bit in the byte and shift it in to the register.
-    for (i = 0; i < 8; i++)
-    {
-        /*
-        if ((data >> (7 - i)) & 1) {
-            SHIFT_REG |= (1 << DATA);
-        } else {
-            SHIFT_REG &= (~(1 << DATA));
-        }
-        */
-        
-        // More efficient:
-        
+    for (i = 0; i < 8; i++) {        
         if (data & 128) {
             SHIFT_REG |= (1 << DATA);
         } else {
@@ -74,7 +63,3 @@ void shift_clear(void) {
     toggle_latch();
 }
 
-
-void shift_disable(void) {
-    SHIFT_REG &= ~(1 << ENABLE);
-}

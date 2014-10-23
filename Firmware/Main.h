@@ -7,6 +7,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/sleep.h>
 
 #include "shift.h"
 #include "USB.h"
@@ -37,6 +38,8 @@ void LED_init(void);
  * is changed.
  */
 void mode_init(void);
+
+void sleep(void);
 
 
 

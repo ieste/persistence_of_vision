@@ -17,5 +17,6 @@ extern volatile uint8_t mode;
 void enable_display(void);
 void disable_display(void);
 uint8_t display_on(void);
+void start_revolution(void);
 
 #endif

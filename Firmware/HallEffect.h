@@ -7,6 +7,7 @@
 #include <avr/interrupt.h>
 
 #include "globalDefs.h"
+#include "display.h"
 
 /* Set up the ports/pin for the hall effect switch. */
 #define HALL_REG PORTD
@@ -42,6 +43,6 @@ uint32_t get_cycles(void);
  * Get the distance travelled since the board was powered on.
  * Returns: distance travelled (in metres).
  */
-uint16_t get_distance(void);
+uint32_t get_distance(void);
 
 #endif

@@ -57,6 +57,5 @@ void output_data(uint8_t* data);
  */
 void shift_clear(void);
 
-void shift_disable(void);
 
 #endif

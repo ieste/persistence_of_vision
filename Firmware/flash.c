@@ -49,17 +49,6 @@ void write_page(uint16_t pageAddress, uint8_t* buffer) {
     boot_rww_enable_safe();
 }
 
-/*
-uint32_t read_dword(uint16_t byteAddress) {
-    return pgm_read_dword(byteAddress);
-}
-*/
-
-/*
-uint16_t read_word(uint16_t byteAddress) {
-    return pgm_read_word(byteAddress);
-}
-*/
 
 uint8_t read_byte(uint16_t byteAddress) {
     return pgm_read_byte(byteAddress);

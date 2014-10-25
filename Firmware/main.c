@@ -44,17 +44,16 @@ int main(void) {
             // display and consider going in to sleep mode.
             if (get_cycles() == 0 || get_cycles() > 16000000) {
                 
+                // Disable the display if we are below 60 RPM.
                 cli();
                 disable_display();
                 shift_clear();
                 sei();
-                // 
+
+                // If the wheel has been going slowly for a while, go to sleep.
                 if (++count > 50000) {
-                    //cli();
-                    //disable_display();
-                    //shift_clear();
                     sleep();
-                    // Reset some stuff...
+                    // After waking up, assume we are starting a new revolution
                     hall_effect_enable();
                     start_revolution();
                     count = 0;
@@ -75,7 +74,6 @@ void initialise(void) {
     // ISRs are located in NRWW memory.
     MCUCR |= (1 << IVCE);
     MCUCR = 0x02;
-    //MCUCR = 0x00;
     
     // Use the power reduction register to disable unused modules on the AVR.
     ADCSRA &= ~(1 << ADEN); // Disable the ADC

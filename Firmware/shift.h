@@ -49,14 +49,6 @@ void shift_init(void);
 void shift_data_in(uint8_t data);
 
 /**
- * Shift 16 bits (2 bytes) of data in to the shift register and latch.
- * Params: the data we are shifting in (an array of two bytes). The MSB of the
- * first byte in data is shifted in first.
- * Note: unused function removed to reduce file size.
- */
-//void output_data(uint8_t* data);
-
-/**
  * Clear the shift registers by shifting in zeros and then latching. This 
  * method does not toggle the mosfets so their state is preserved.
  */

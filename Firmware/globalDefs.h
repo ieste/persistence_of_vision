@@ -9,7 +9,9 @@
 #define F_CPU 16000000UL
 
 /**
- * 
+ * The firmware takes up more than the amount of space available in the NRWW
+ * section of program memory, so we put some of it into RWW memory with a
+ * separate code section.
  */
 #define RWW_SECTION __attribute__ ((section (".rwwsection")))
 

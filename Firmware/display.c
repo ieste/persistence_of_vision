@@ -33,14 +33,34 @@ volatile uint8_t on = 0;
  */
 extern volatile uint16_t delay;
 
+/**
+ * The speed of the wheel in metres per second, to two decimal places, 
+ * separated into digits (e.g. 3.06 m/s would be {3, 0, 6}).
+ */
 volatile uint8_t speedDigits[3];
 
+/**
+ * The distance travelled, in metres, separated into digits (e.g. 105 metres
+ * would be {0, 0, 1, 0, 5}.
+ */
 volatile uint8_t distanceDigits[5];
 
+/**
+ * A global variable for holding the speed display data as each column of data
+ * is repeated 16 times per revolution.
+ */
 volatile uint8_t tempSpeedDisplayData;
 
+/**
+ * A global variable for holding the distance display data as each column of 
+ * data is repeated 16 times per revolution.
+ */
 volatile uint8_t tempDistanceDisplayData;
 
+/**
+ * Hard coded data to be sent to the shift registers in order to output digits
+ * 0 to 9 for the live speed/distance display mode.
+ */
 const uint8_t digitData[30] = {
         124, 68, 124,       // Zero
         0, 124, 0,          // One
@@ -54,6 +74,10 @@ const uint8_t digitData[30] = {
         112, 80, 124        // Nine
 };
 
+/**
+ * Hard coded data to be sent to the shift registers in order to output "m/s"
+ * for the live speed/distance display mode.
+ */
 const uint8_t textData[18] = {
         0,
         124, 32, 16, 32, 124,   // m
@@ -62,6 +86,7 @@ const uint8_t textData[18] = {
         0,
         116, 84, 84, 84, 92     // s
 };
+
 
 void RWW_SECTION enable_display(void) {
 
@@ -236,6 +261,7 @@ uint8_t RWW_SECTION get_distance_display_data(void) {
     return tempDistanceDisplayData >> mosfet;
 }
 
+
 /**
  * Interrupt service routine for LED driving. Although this would be neater
  * using functions from shift.c, it has instead been hard coded to avoid 
@@ -245,7 +271,6 @@ uint8_t RWW_SECTION get_distance_display_data(void) {
 ISR(TIMER1_COMPA_vect) {
     
     uint8_t data[2];
-    //uint8_t i;
     
     // Set output data based on current mode.
     if (mode == 0 || mode == 1) {

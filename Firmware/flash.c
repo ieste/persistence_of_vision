@@ -8,7 +8,7 @@ void read_page(uint16_t pageAddress, uint8_t* buffer) {
     uint8_t i;
     
     // Convert the page address into a byte address.
-    uint32_t page = PAGE_SIZE * pageAddress;
+    uint32_t page = PAGE_SIZE * pageAddress + ADDRESS_OFFSET;
 
     // Loop through each byte in the page and place it in the buffer.
     for (i = 0; i < PAGE_SIZE; i++) {
@@ -22,7 +22,7 @@ void write_page(uint16_t pageAddress, uint8_t* buffer) {
     uint8_t i;
     
     // Convert the page address into a byte address.
-    uint32_t page = PAGE_SIZE * pageAddress;
+    uint32_t page = PAGE_SIZE * pageAddress + ADDRESS_OFFSET;
     
     // Erase the page we are writing to (and wait for this to finish).
     boot_page_erase_safe(page);
@@ -49,16 +49,17 @@ void write_page(uint16_t pageAddress, uint8_t* buffer) {
     boot_rww_enable_safe();
 }
 
-
+/*
 uint32_t read_dword(uint16_t byteAddress) {
     return pgm_read_dword(byteAddress);
 }
+*/
 
-
+/*
 uint16_t read_word(uint16_t byteAddress) {
     return pgm_read_word(byteAddress);
 }
-
+*/
 
 uint8_t read_byte(uint16_t byteAddress) {
     return pgm_read_byte(byteAddress);

@@ -22,9 +22,9 @@ TARGET = main
 AVRDUDE_PROGRAMMER = usbasp
 AVRDUDE_PORT = usb
 
-# Where in program memory to flash the program (byte address).
+# Where in program memory to flash the bootloader section (byte address).
 BOOTSTART = 0x7000
-#BOOTSTART = 0x0000
+RWWSTART = 0x0000
 
 # Optimization level, can be [0, 1, 2, 3, s]. 0 turns off optimization.
 # (Note: 3 is not always the best optimization level. See avr-libc FAQ.)
@@ -85,6 +85,7 @@ ASFLAGS = -Wa,-adhlns=$(<:.S=.lst),-gstabs
 #  -Map:      create map file
 #  --cref:    add cross reference to  map file
 LDFLAGS = -Wl,-Map=$(TARGET).map,--cref,--section-start=.text=$(BOOTSTART)
+LDFLAGS += -Wl,--section-start=.rwwsection=$(RWWSTART)
 
 # -lm = math library
 LDFLAGS += -lm

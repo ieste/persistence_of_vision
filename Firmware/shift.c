@@ -41,7 +41,8 @@ void shift_data_in(uint8_t data) {
     }
 }
 
-
+/*
+// Note: unused function removed to reduce file size.
 void output_data(uint8_t* data) {
     // Shift in the data.
     shift_data_in(data[0]);
@@ -51,7 +52,7 @@ void output_data(uint8_t* data) {
     toggle_latch_fets();
     toggle_latch();
 }
-
+*/
 
 void shift_clear(void) {
     // Shift in zeros.

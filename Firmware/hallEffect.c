@@ -109,7 +109,7 @@ uint32_t get_cycles(void) {
 
 
 uint32_t get_distance(void) {
-    return (revolutions * CIRCUMFERENCE) / 1000;
+    return (revolutions * (uint32_t)CIRCUMFERENCE) / (uint32_t)1000;
 }
 
 

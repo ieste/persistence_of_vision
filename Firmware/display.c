@@ -158,13 +158,13 @@ void RWW_SECTION start_revolution(void) {
         
         // Separate distance into digits.
         distanceDigits[0] = distance/10000;
-        distance -= distanceDigits[0];
+        distance -= distanceDigits[0] * 10000;
         distanceDigits[1] = distance/1000;
-        distance -= distanceDigits[1];
+        distance -= distanceDigits[1] * 1000;
         distanceDigits[2] = distance/100;
-        distance -= distanceDigits[2];
+        distance -= distanceDigits[2] * 100;
         distanceDigits[3] = distance/10;
-        distance -= distanceDigits[3];
+        distance -= distanceDigits[3] * 10;
         distanceDigits[4] = distance;
     }
 }

@@ -3,6 +3,7 @@
 # Import GUI libraries/modules.
 from Tkinter import *
 import tkFileDialog, tkColorChooser, tkSimpleDialog
+from tkFileDialog import asksaveasfilename
 
 # Import image processing libraries/modules.
 from PIL import Image, ImageTk, ImageDraw, ImageFont
@@ -19,20 +20,15 @@ import ImageParser
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
-class InvalidFile(object):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
 class POVApp(object):
     """Top level POV Display application"""
 
     def __init__(self, root):
+
         # Main Window
         root.title('POV Wheel')
+        root.geometry('+0+0')
+        root.iconbitmap(sys.path[0] + '/resources/icon.ico')
         self._root = root
 
         # Menu Bar for new, open image, save image, upload and exit functions
@@ -162,8 +158,8 @@ class POVApp(object):
         self.zoom_level = float(self.canvas.winfo_width() - 100) / self.w
         if self.zoom_level < 1:
             self.zoom_level = 1.0
-        if self.zoom_level > 6:
-            self.zoom_level = 6.0
+        if self.zoom_level > 8:
+            self.zoom_level = 8.0
 
         self.zw, self.zh = self.zoom_level*self.w, self.zoom_level*self.h
 
@@ -410,7 +406,7 @@ class POVApp(object):
     ## Preview
 
     def preview(self):
-        """Opens new window with image displayed as would appear on the POV display"""
+        """Generate image as would appear on the POV display"""
         # Define size variables
         inr = 16*self.preview_multiplier  # Inner Radius
         cen = 48*self.preview_multiplier  # Center
@@ -454,59 +450,34 @@ class POVApp(object):
     ## Menu
 
     def open_image(self):
-        """Opens image through Image Parser"""
-        self.imagefile = tkFileDialog.askopenfilename()
+        """Open an image and place it on the canvas."""
+        filename = tkFileDialog.askopenfilename()
         try:
-            im = open(self.imagefile, 'rb')
-            self.img = ImageParser.parse_image(im)
-            self.info = ImageParser.get_info(im)
+            image_file = open(filename, 'rb')
+            self.img = ImageParser.parse_image(image_file)
+            self.img = self.img.convert("RGB")
+            self.info = ImageParser.get_info(image_file)
             self.size = self.info[1]
             self.w, self.h = self.size[0], self.size[1]
             self.zw, self.zh = self.zoom_level*self.w, self.zoom_level*self.h
             self.update_canvas_img()
-        except InvalidFile as e:
-            tkMessageBox.showwarning(title="Invalid File",
-                                     message=e)
+        except AttributeError:
+            self.statusbar_text("Invalid File.")
+        except IOError:
+            self.statusbar_text("No file selected.")
 
     def save_image(self):
         """Saves image as P2 type .pgm for any given name"""
-        self.data = []
-        self.pixel = self.img.getpixel((0, 0))
-
-        if type(self.pixel) == tuple:
-            for i in list(self.img.getdata()):
-                self.data.append(str(i[0]))
-        else:
-            for i in list(self.img.getdata()):
-                self.data.append(str(i))
-
-        self.data = '\n'.join(self.data)
-
-        from tkFileDialog import asksaveasfilename
-        self.filename = asksaveasfilename(defaultextension='.pgm')
-        if self.filename:
-            f = open(self.filename, "w")
-            f.write('P2\n')
-            f.write('{} {}\n' .format(self.w, self.h))
-            f.write('255\n')
-            i = 0
-            j = 0
-            while i < self.h:
-                while j < (self.w*(i + 1)):
-                    f.write('{} '.format(self.data.split()[j]))
-                    j += 1
-                i += 1
-                f.write('\n')
-            f.close()
+        filename = asksaveasfilename(defaultextension='.pgm')
+        if filename:
+            ImageParser.save_image(self.img, filename)
 
     def upload_image(self):
-        """Uploads image information to avr via ImageParser
-        If USB device not found, returns error status to status bar
-        """
+        """Uploads image information to AVR. If USB device not found, returns error status to status bar."""
         avr = USBDevice(view=self)
         avr.write_pages(ImageParser.image_to_data(self.img))
 
+
 root = Tk()
-root.iconbitmap(sys.path[0] + '/resources/icon.ico')
 app = POVApp(root)
 root.mainloop()

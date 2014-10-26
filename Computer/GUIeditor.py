@@ -2,8 +2,7 @@
 
 # Import GUI libraries/modules.
 from Tkinter import *
-import tkFileDialog
-import tkColorChooser
+import tkFileDialog, tkColorChooser, tkSimpleDialog
 
 # Import image processing libraries/modules.
 from PIL import Image, ImageTk, ImageDraw, ImageFont
@@ -75,6 +74,10 @@ class POVApp(object):
         self.erase.pack(pady=2, fill=X)
         self.clear = Button(self.toolbar, text="Clear")
         self.clear.pack(pady=2, fill=X)
+        self.resize = Button(self.toolbar, text="Resize")
+        self.resize.pack(pady=2, fill=X)
+        self.text = Button(self.toolbar, text="Text")
+        self.text.pack(pady=2, fill=X)
 
         # Binds mouse events to tool buttons
         self.drag.bind("<Button-1>", self.drag_click)
@@ -84,6 +87,8 @@ class POVApp(object):
         self.square.bind("<Button-1>", self.square_click)
         self.erase.bind("<Button-1>", self.erase_click)
         self.clear.bind("<Button-1>", self.clear_click)
+        self.resize.bind("<ButtonRelease-1>", self.resize_click)
+        self.text.bind("<ButtonRelease-1>", self.text_click)
 
         # Configuration for canvas
         self.canvas = Canvas(root, bg="light grey", width=400, height=200, highlightthickness=0)
@@ -91,35 +96,14 @@ class POVApp(object):
         root.columnconfigure(1, weight=1)
         self.canvas.bind("<Configure>", self.canvas_resize)
 
-        # Create image on canvas
-        self.new()
-
         # Bind mouse events to canvas for tool functionality
         self.canvas.bind("<Motion>", self.mouse_motion)
         self.canvas.bind("<Button-1>", self.mouse_click)
         self.canvas.bind("<ButtonRelease-1>", self.mouse_release)
 
-        # Input Frame for resize entry, text entry and update preview button
-        self.input_frame = Frame(root)
-        self.input_frame.grid(row=1, column=1)
-
-        # Configuration for resize
-        self.width_label = Label(self.input_frame, text='Resize: ')
-        self.width_label.pack(side=LEFT)
-        self.width_entry = Entry(self.input_frame, width=10)
-        self.width_entry.pack(side=LEFT, padx=(0, 25))
-        self.width_entry.bind("<Return>", self.enter_width)
-
-        # Configuration for text entry
-        self.instruct1 = Label(self.input_frame, text='Enter Text: ')
-        self.instruct1.pack(side=LEFT)
-        self.text_entry = Entry(self.input_frame, width=28)
-        self.text_entry.pack(side=LEFT)
-        self.text_entry.bind("<Return>", self.preview_text)
-
         # Preview Frame for preview display
         self.previewbtn_frame = Frame(root)
-        self.previewbtn_frame.grid(row=2, column=1, pady=5)
+        self.previewbtn_frame.grid(row=1, column=1, pady=5)
 
         # Rotated view preview button
         self.preview_button = Button(self.previewbtn_frame, text='Update Preview', command=self.preview)
@@ -129,13 +113,17 @@ class POVApp(object):
         self.preview_multiplier = 3  # How many times bigger to show the preview
         self.preview_canvas = Canvas(root, bg="light grey", width=96*self.preview_multiplier,
                                      height=96*self.preview_multiplier)
-        self.preview_canvas.grid(row=3, column=1)
+        self.preview_canvas.grid(row=2, column=1)
 
         # Status Bar indicates state of software
         self.statusbar = Label(root, text="", bd=1, relief=SUNKEN, anchor=W)
-        self.statusbar.grid(row=4, column=0, columnspan=2, sticky=E+W+S)
-        root.rowconfigure(4, weight=1)
+        self.statusbar.grid(row=3, column=0, columnspan=2, sticky=E+W+S)
+        root.rowconfigure(3, weight=1)
         self.statusbar_clearid = 0
+
+        # Create image on canvas
+        self.tid = None
+        self.new()
 
     def statusbar_text(self, text):
         """Takes text from upload_image function and displays message in statusbar"""
@@ -145,7 +133,7 @@ class POVApp(object):
 
     def new(self):
         """Returns image to blank"""
-        self.w, self.h = 360, 32
+        self.w, self.h = self.ask_width(), 32
         self.cxc, self.cyc = self.canvas.winfo_width()/2, self.canvas.winfo_height()/2
         self.offsetx, self.offsety = 0, 0
         self.zoom_level = 1.0
@@ -155,8 +143,18 @@ class POVApp(object):
         self.t = ImageTk.PhotoImage(self.img)
         self.tid = self.canvas.create_image(self.cxc+self.offsetx, self.cyc+self.offsety, image=self.t)
 
+    def ask_width(self, initialvalue=360):
+        self._root.update()
+        width = tkSimpleDialog.askinteger('Width', 'Please enter an image width.',
+                    initialvalue=initialvalue, minvalue=1, maxvalue=360)
+        if width is None:
+            width = initialvalue
+        return width
+
     def canvas_resize(self, e):
         """Centers the image when the canvas is resized"""
+        if self.tid is None:
+            return
         # Canvas x center & y center
         self.cxc, self.cyc = self.canvas.winfo_width()/2, self.canvas.winfo_height()/2
         self.canvas.coords(self.tid, self.cxc+self.offsetx, self.cyc+self.offsety)
@@ -382,41 +380,31 @@ class POVApp(object):
         self.d.rectangle([x0, y0, x1, y1], fill=self.colour)
         self.update_canvas_img()
 
-    ## Text
-
-    def preview_text(self, e):
-        """Draws text from entry widget onto image centred"""
-        font = ImageFont.load(os.path.dirname(__file__) + '/pilfonts/courB14.pil')
-        self.text = self.text_entry.get()
-        self.d = ImageDraw.Draw(self.img)
-        self.text_width, self.text_height = self.d.textsize(self.text)
-
-        self.d.text((self.w/2-self.text_width+6, self.h/2-self.text_height),
-                    self.text, fill=self.colour, font=font)
-
-        # Update the image instead of creating a new one,
-        # required so that we can resize/zoom the canvas.
-        self.update_canvas_img()
-
     ## Resize
 
-    def enter_width(self, e):
-        """Resizes the image width to number in entry widget
-        Will not resize larger than 360 or smaller than 1 pixel
-        """
-        oldw = self.w
-        self.w = self.width_entry.get()
-        if self.w == '':
-            return 0
-        self.w = int(self.width_entry.get())
-        if self.w > 360:
-            self.w = 360
-        if self.w < 1:
-            self.w = 1
-        self.zw = self.zoom_level*self.w
-        oldimg = self.img
-        self.img = Image.new('RGB', (self.w, self.h), "black")
-        self.img.paste(oldimg, ((self.w-oldw)/2, 0))
+    def resize_click(self, e):
+        """Resizes the image width"""
+        newwidth = self.ask_width(initialvalue=self.w)
+        newimage = Image.new('RGB', (newwidth, self.h), "black")
+        newimage.paste(self.img, ((newwidth-self.w)/2, 0))
+        self.w, self.zw = newwidth, newwidth * self.zoom_level
+        self.img = newimage
+        self.update_canvas_img()
+
+    ## Text
+
+    def text_click(self, e):
+        """Draws text onto image centred"""
+        text = tkSimpleDialog.askstring('Text', 'Please enter the text you wish to display.')
+        if text is None:
+            return
+        font = ImageFont.load(sys.path[0] + '/resources/courB14.pil')
+        self.d = ImageDraw.Draw(self.img)
+        self.text_width, self.text_height = self.d.textsize(text)
+
+        self.d.text((self.w/2-self.text_width+6, self.h/2-self.text_height),
+                    text, fill=self.colour, font=font)
+
         self.update_canvas_img()
 
     ## Preview
@@ -519,5 +507,6 @@ class POVApp(object):
         avr.write_pages(ImageParser.image_to_data(self.img))
 
 root = Tk()
+root.iconbitmap(sys.path[0] + '/resources/icon.ico')
 app = POVApp(root)
 root.mainloop()

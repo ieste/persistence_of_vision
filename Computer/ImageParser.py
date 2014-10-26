@@ -2,11 +2,14 @@
 A collection of methods to provide functionality for reading and writing
 NetPBM images.
 
-Functions:
+Note: reading in of P3 and P6 images is not currently supported.
 
+Functions:
 get_info() -- get header details from a NetPBM file.
-parse_image() -- read in data from any NetPBM file.
+parse_image() -- read in data from a NetPBM file.
 """
+
+# Import needed modules/libraries.
 import os.path
 import string
 import sys
@@ -15,6 +18,12 @@ import array
 
 
 def get_info(path_or_file):
+    """
+    Read the header information from a NetPBM file.
+    :param path_or_file: either a path to the file, or a file handle of the file.
+    :return: (type, (width, height), max_val), where type is the NetPBM file type, width and height are the image
+    dimensions and max_val represents the maximum intensity colour in the picture.
+    """
 
     # if path_or_file is file, assign to image_file and seek to start of file
     if isinstance(path_or_file, file):
@@ -237,6 +246,12 @@ def _P5_parser(image_file):
 
 
 def parse_image(image_file):
+    """
+    Read in an NetPBM image file.
+    :param image_file: a file handle for the file being read in.
+    :return: an image object representing the image read in.
+    Note: reading in of P3 and P6 files is not currently supported.
+    """
 
     # Read in the file info
     image_info = get_info(image_file)
@@ -255,7 +270,6 @@ def parse_image(image_file):
         sys.stderr.write("Parser for " + file_type + " not found.\n")
         return
 
-    #return resize_image(parser(image_file))
     return parser(image_file)
 
 
@@ -267,8 +281,6 @@ def resize_image(image):
         return
 
     im = Image.new("L", (360, 32), "black")
-
-    #TODO Compress this function (it's kind of messy)
 
     if width >= 360 and height >= 32:
         x = (width - 360) / 2

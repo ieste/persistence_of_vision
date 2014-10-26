@@ -31,7 +31,7 @@ volatile uint8_t numPages = 0;
 /**
  * Used to store page numbers so that we can only write to specific pages 
  * rather than having to write a whole image to consecutive pages. This is used
- * to re-write bad pages (where writing failed on the first attempt.
+ * to re-write bad pages (where writing failed on the first attempt).
  */
 volatile uint8_t pagesToWrite[128];
 
@@ -44,7 +44,7 @@ volatile uint8_t handshaking = 1;
 
 /**
  * USB report descriptor - this is stored in program memory. Taken from
- * hid-data VUSB example. 
+ * hid-data VUSB example.
  */
 PROGMEM const char usbHidReportDescriptor[22] = {
     0x06, 0x00, 0xff,              // USAGE_PAGE (Generic Desktop)
@@ -112,7 +112,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
             
             // Toggle LED for each page transfer so that the LED blinks
             // during data transfer.
-            toggleLED();
+            toggle_LED();
             
             if (pagesWritten == numPages) {
                 pagesWritten = 0;
@@ -123,7 +123,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
         }
     }
     
-    // Other types of requests (vendor) are ignored
+    // Other types of requests (vendor) are ignored.
     return 0;
 }
 
@@ -184,7 +184,7 @@ uchar usbFunctionWrite(uchar *data, uchar len)
         
         // Ensure the indicator LED is on at the end of a data transfer.
         if (pagesWritten == numPages) {
-            LEDon();
+            LED_on();
         }
         
         // Return 1 to signal end of transfer.

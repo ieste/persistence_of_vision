@@ -2,9 +2,6 @@
 
 #include "main.h"
 
-#include "shift.h"
-
-
 /**
  * Store the mode the board is currently in. 0 = normal operating mode,
  * 1 = test mode 1, 2 = test mode 2, 3 = test mode 3, 4 = distance/speed
@@ -12,11 +9,18 @@
  */
 volatile uint8_t mode = 0;
 
-
+/**
+ * Flag to keep track of whether a USB connection has been established or not.
+ * This flag is set inside the USB driver code.
+ */
 volatile uint8_t USB_connected = 0;
 
+/**
+ * Count variable that counts up to 50000 (somewhat arbitrarily) before the
+ * microcontroller will go to sleep. This is to avoid going to sleep when it
+ * is not necessary.
+ */
 uint32_t count = 0;
-
 
 
 /**
@@ -36,21 +40,27 @@ int main(void) {
         // Manage speed and enable/disable display accordingly.
         if (!USB_connected && (mode == 0 || mode == 4)) {
         
+            // If the wheel is spinning at less than 60 RPM, disable the
+            // display and consider going in to sleep mode.
             if (get_cycles() == 0 || get_cycles() > 16000000) {
-               
+                
+                // Disable the display if we are below 60 RPM.
+                cli();
+                disable_display();
+                shift_clear();
+                sei();
+
+                // If the wheel has been going slowly for a while, go to sleep.
                 if (++count > 50000) {
-                    cli();
-                    disable_display();
-                    shift_clear();
-                    //LEDoff();
                     sleep();
-                    //LEDon();
-                    // Reset some stuff...
+                    // After waking up, assume we are starting a new revolution
                     hall_effect_enable();
                     start_revolution();
                     count = 0;
                }
-                
+            
+            // If the wheel is spinning at more than 60 RPM, enable the display
+            // if it is off.
             } else if (!display_on()) {
                 enable_display();
             }
@@ -85,6 +95,13 @@ void initialise(void) {
     if (mode == 1) {
         hall_effect_disable();
         enable_display();
+    } else {
+        // If mode is 0, perform a power-on test.
+        mode = 2;
+        enable_display();
+        _delay_ms(1000);
+        disable_display();
+        mode = 0;
     }
 }
 
@@ -93,7 +110,7 @@ void LED_init(void) {
     
     // Set the LED as an output and turn it on.
     LED_DIR |= (1 << LED);
-    LEDon();
+    LED_on();
 }
 
 
@@ -122,9 +139,16 @@ void mode_init(void) {
 
 
 void sleep(void) {
+    // Enable sleep mode
     sleep_enable();
+    
+    // Make sure interrupts are enabled (or we can never escape from sleep).
     sei();
+    
+    // Put the CPU to sleep.
     sleep_cpu();
+    
+    // Disable sleep (this only occurs after the CPU has been woken).
     sleep_disable();
 }
 

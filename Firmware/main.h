@@ -1,4 +1,9 @@
 
+/**
+ * The main.h and main.c files contain the main control loop of the program, 
+ * and handle high level operations such as initialising the hardware, managing
+ * the mode of the software and
+ */
 
 #ifndef MAIN_H
 #define MAIN_H
@@ -8,6 +13,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
+#include <util/delay.h>
 
 #include "shift.h"
 #include "USB.h"
@@ -39,6 +45,9 @@ void LED_init(void);
  */
 void mode_init(void);
 
+/**
+ * Puts the AVR in to sleep mode in order to reduce power consumption.
+ */
 void sleep(void);
 
 

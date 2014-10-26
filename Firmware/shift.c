@@ -42,17 +42,6 @@ void shift_data_in(uint8_t data) {
 }
 
 
-void output_data(uint8_t* data) {
-    // Shift in the data.
-    shift_data_in(data[0]);
-    shift_data_in(data[1]);
-    
-    // Perform latching and switch the MOSFETs.
-    toggle_latch_fets();
-    toggle_latch();
-}
-
-
 void shift_clear(void) {
     // Shift in zeros.
     shift_data_in(0);

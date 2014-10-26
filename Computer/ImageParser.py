@@ -167,7 +167,7 @@ def _P2_parser(image_file):
         image.append(b)
         i += 1
 
-    print image
+    #print image
 
     for y in range(height):
         for x in range(width):
@@ -274,12 +274,38 @@ def parse_image(image_file):
     return parser(image_file)
 
 
-def save_image(image, filename):
+def save_image(image, filepath):
     """
-    Save an image as a NetPBM
-    :param filename:
-    :return:
+    Save an image as a NetPBM image file (P2).
+
+    :param filepath: the path we want to save the image to.
     """
+
+    #Convert image to gray scale before saving.
+    image = image.convert("L")
+    data = []
+
+    for i in list(image.getdata()):
+            data.append(str(i))
+
+    data = '\n'.join(data)
+
+    width, height = image.size
+
+    if filepath:
+        f = open(filepath, "w")
+        f.write('P2\n')
+        f.write('{} {}\n' .format(width, height))
+        f.write('255\n')
+        i = 0
+        j = 0
+        while i < height:
+            while j < (width*(i + 1)):
+                f.write('{} '.format(data.split()[j]))
+                j += 1
+            i += 1
+            f.write('\n')
+        f.close()
 
 
 # Move to an image processing module

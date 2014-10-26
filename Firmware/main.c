@@ -97,7 +97,7 @@ void initialise(void) {
         enable_display();
     } else if (!USB_connected) {
         // Attempt to establish USB connection
-        uint16_t i = 0;
+        uint8_t i = 0;
         while (--i) {
             usbPoll();
             _delay_ms(3);

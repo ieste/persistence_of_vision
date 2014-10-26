@@ -33,6 +33,7 @@ class POVApp(object):
     def __init__(self, root):
         # Main Window
         root.title('POV Wheel')
+        root.geometry('+0+0')
         self._root = root
 
         # Menu Bar for new, open image, save image, upload and exit functions
@@ -470,6 +471,7 @@ class POVApp(object):
 
     def save_image(self):
         """Saves image as P2 type .pgm for any given name"""
+
         self.data = []
         self.pixel = self.img.getpixel((0, 0))
 

@@ -7,6 +7,7 @@ Note: reading in of P3 and P6 images is not currently supported.
 Functions:
 get_info() -- get header details from a NetPBM file.
 parse_image() -- read in data from a NetPBM file.
+save_image() -- save an image as a NetPBM file.
 """
 
 # Import needed modules/libraries.
@@ -271,6 +272,14 @@ def parse_image(image_file):
         return
 
     return parser(image_file)
+
+
+def save_image(image, filename):
+    """
+    Save an image as a NetPBM
+    :param filename:
+    :return:
+    """
 
 
 # Move to an image processing module

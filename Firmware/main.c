@@ -95,7 +95,14 @@ void initialise(void) {
     if (mode == 1) {
         hall_effect_disable();
         enable_display();
-    } else {
+    } else if (!USB_connected) {
+        // Attempt to establish USB connection
+        uint16_t i = 0;
+        while (--i) {
+            usbPoll();
+            _delay_ms(3);
+        }
+        
         // If mode is 0, perform a power-on test.
         mode = 2;
         enable_display();

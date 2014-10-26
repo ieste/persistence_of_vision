@@ -66,7 +66,9 @@ PROGMEM const char usbHidReportDescriptor[22] = {
 void USB_init(void) {
     cli();
     usbInit();
-    _delay_ms(200);
+    usbDeviceDisconnect();
+    _delay_ms(250);
+    usbDeviceConnect();
     sei();
 }
 

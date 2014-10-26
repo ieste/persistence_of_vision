@@ -313,11 +313,9 @@ def image_to_data(image):
                 byte = 0
                 for l in range(8):
                     if sub_col[k][l] & (1 << j):
-                        #TODO SHOULD THIS BE (1 << 7-l)??
-                        #byte |= (1 << l)
                         byte |= (1 << 7-l)
                 n = ((3 - k) / 2) * 2 + k % 2
-                data[i/4][i%4*32+j*4+n] = byte
+                data[i / 4][i % 4 * 32 + j * 4 + n] = byte
 
     return data
 

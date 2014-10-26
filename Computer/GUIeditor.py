@@ -1,15 +1,20 @@
-import math
-import os
 
+
+# Import GUI libraries/modules.
 from Tkinter import *
 import tkFileDialog
 import tkColorChooser
 
+# Import image processing libraries/modules.
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 from PIL import ImageFile
 
-from USBDevice import USBDevice
+# Import other useful modules.
+import math
+import os
 
+# Import our modules
+from USBDevice import USBDevice
 import ImageParser
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -155,6 +160,17 @@ class POVApp(object):
         # Canvas x center & y center
         self.cxc, self.cyc = self.canvas.winfo_width()/2, self.canvas.winfo_height()/2
         self.canvas.coords(self.tid, self.cxc+self.offsetx, self.cyc+self.offsety)
+        # Adjust zoom
+        self.zoom_level = float(self.canvas.winfo_width() - 100) / self.w
+        if self.zoom_level < 1:
+            self.zoom_level = 1.0
+        if self.zoom_level > 6:
+            self.zoom_level = 6.0
+
+        self.zw, self.zh = self.zoom_level*self.w, self.zoom_level*self.h
+
+        self.update_canvas_img()
+        self.check_bounds()
 
     def translate_coords(self, x, y):
         """Translate coordinates from the canvas reference to the image reference"""
@@ -235,14 +251,15 @@ class POVApp(object):
     def zoom_motion(self, e):
         """Zooms image in sync with mouse motion, limited to minimum zoom level of 1 and maximum zoom level of 6"""
         zoom_delta = e.x - self.x0
-        self.zoom_level += zoom_delta/25.0
-        self.zw, self.zh = self.zoom_level*self.w, self.zoom_level*self.h
         self.x0 = e.x
 
+        self.zoom_level += zoom_delta/25.0
         if self.zoom_level < 1:
             self.zoom_level = 1.0
         if self.zoom_level > 6:
             self.zoom_level = 6.0
+
+        self.zw, self.zh = self.zoom_level*self.w, self.zoom_level*self.h
 
         self.update_canvas_img()
         self.check_bounds()
@@ -396,6 +413,7 @@ class POVApp(object):
             self.w = 360
         if self.w < 1:
             self.w = 1
+        self.zw = self.zoom_level*self.w
         oldimg = self.img
         self.img = Image.new('RGB', (self.w, self.h), "black")
         self.img.paste(oldimg, ((self.w-oldw)/2, 0))

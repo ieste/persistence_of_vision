@@ -515,12 +515,7 @@ class POVApp(object):
         """Uploads image information to avr via ImageParser
         If USB device not found, returns error status to status bar
         """
-        try:
-            avr = USBDevice()
-        except:
-            # print "USB Device not found."
-            self.statusbar_text("USB Device not found.")
-            return
+        avr = USBDevice(view=self)
         avr.write_pages(ImageParser.image_to_data(self.img))
 
 root = Tk()

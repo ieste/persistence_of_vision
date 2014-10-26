@@ -5,6 +5,7 @@ import usb.core
 import array
 import time
 
+
 from PIL import Image
 
 
@@ -13,13 +14,16 @@ class USBDevice:
     #TODO Error handling in case of: "USBError: [Errno None] libusb0-dll:err [control_msg] sending control message failed, win error: A device attached to the system is not functioning."
 
 
-    def __init__(self, vid=0x16C0):
+    def __init__(self, vid=0x16C0, view=None):
         #TODO check vendor name and other details to ensure we have the right device
         #TODO handle return of multiple devices
         #TODO allow user selection of device but also auto-select the best candidate
         self.device = usb.core.find(idVendor=vid)
         if self.device is None:
-            raise Exception('Device not found.')
+            if view is None:
+                raise Exception('Device not found.')
+            else:
+                view.statusbar_text('USB Device not found.')
 
     def _write(self, data):
         self.device.ctrl_transfer(bmRequestType=0b00100001, bRequest=0x09, wValue=0x0300, data_or_wLength=data)
@@ -35,7 +39,8 @@ class USBDevice:
 
         # send and receive handshake
         self._write(handshake)
-        print "Writing", self._read()[0], "page(s)..."
+        print "Writing " + str(self._read()[0]) + " page(s)..."
+        UI.statusbar_text("Writing " + str(self._read()[0]) + " page(s)...")
 
         for i in range(len(data)):
             time.sleep(0.1)
@@ -77,45 +82,3 @@ class USBDevice:
             print "Writing to pages", failed, "failed after 3 attempts. Aborted."
         else:
             print "Transfer succeeded."
-
-
-
-
-
-
-
-
-"""
-Things we want to be able to do:
-Send a whole image
-Validate an image
-Write a specific page or list of pages
-?Read a whole image
-"""
-
-
-"""
-data = [array.array('B', [0]*128) for i in range(90)]
-print data
-"""
-
-#avr = USBDevice()
-"""
-t1 = time.time()
-failed = []
-for i in range(90):
-    data = array.array('B', [i]*128)
-    time.sleep(0.1)
-    avr.write(data)
-    input = avr.read()
-    error = 0
-    for j in range(128):
-        if input[j] is not data[j]:
-            failed.append(i)
-            print i
-            continue
-
-
-print failed
-print time.time() - t1
-"""
